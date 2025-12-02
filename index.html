@@ -96,7 +96,7 @@
 
         .wheel-wrapper {
             position: relative; 
-            width: 340px; height: 340px; 
+            width: 320px; height: 320px; /* Tamanho Visual no CSS */
             margin: 10px auto;
             display: flex; align-items: center; justify-content: center;
         }
@@ -109,9 +109,10 @@
 
         canvas#wheel {
             position: relative; z-index: 1; 
-            width: 320px; height: 320px; 
+            /* O tamanho aqui é controlado pelo JS para alta resolução */
+            width: 100%; height: 100%; 
             border-radius: 50%; transform-origin: center center;
-            /* PERFORMANCE FIXES: Aceleração de Hardware */
+            /* PERFORMANCE FIXES */
             will-change: transform;
             transform: translateZ(0); 
             backface-visibility: hidden;
@@ -217,7 +218,7 @@
         <div class="wheel-wrapper">
             <div class="wheel-background"></div>
             <div class="pointer"></div>
-            <canvas id="wheel" width="320" height="320"></canvas>
+            <canvas id="wheel"></canvas> <!-- Tamanho definido via JS para High DPI -->
         </div>
 
         <button id="btnSpin" class="btn-play">GIRAR (FREE)</button>
@@ -232,6 +233,31 @@
 </div>
 
 <script>
+    // --- HIGH DPI CANVAS SETUP ---
+    const canvas = document.querySelector("#wheel");
+    const ctx = canvas.getContext("2d");
+    
+    // Tamanho Visual desejado (CSS)
+    const size = 320; 
+    // Densidade de pixeis do dispositivo (ex: 2.0 ou 3.0 para telemóveis)
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Definir resolução interna alta
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    
+    // Forçar tamanho visual no CSS
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    
+    // Normalizar escala do contexto para que desenhemos como se fosse 320px
+    ctx.scale(dpr, dpr);
+    
+    // Variáveis globais para desenho
+    const dia = size; 
+    const rad = dia / 2;
+    // ----------------------------
+
     function checkAccess() {
         const urlParams = new URLSearchParams(window.location.search);
         const accessCode = urlParams.get('access');
@@ -278,7 +304,7 @@
         error: () => playTone(150, 'sawtooth', 0.4)
     };
 
-const firebaseConfig = {
+ const firebaseConfig = {
 
   apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE",
 
@@ -296,7 +322,6 @@ const firebaseConfig = {
 
 };
 
-
     function simpleHash(str) {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -310,7 +335,6 @@ const firebaseConfig = {
     const ADMIN_HASHES = ["770091061"]; 
     const ADMIN_B64 = "KzI1ODg2NTQ3NjMzMw=="; 
 
-    // --- NOMES DOS PRÉMIOS (IGUAIS AO VISUAL) ---
     const sectors = [
         { color: "#00d9ff", text: "YANGO 10%", label: "Desconto Yango 10%", textCol: "#000" }, 
         { color: "#8a2be2", text: "ACESSÓRIOS", label: "Acessórios Infinix", textCol: "#fff" },    
@@ -320,10 +344,6 @@ const firebaseConfig = {
         { color: "#00ff9d", text: "ACESSÓRIOS", label: "Acessórios Infinix", textCol: "#000" }      
     ];
 
-    const canvas = document.querySelector("#wheel");
-    const ctx = canvas.getContext("2d");
-    const dia = canvas.width; 
-    const rad = dia / 2;
     const PI = Math.PI;
     const TAU = 2 * PI;
     const arc = TAU / sectors.length;
@@ -349,7 +369,8 @@ const firebaseConfig = {
             ctx.rotate(angulo + arc / 2);
             ctx.textAlign = "right";
             ctx.fillStyle = sector.textCol;
-            ctx.font = "bold 16px 'Outfit', sans-serif"; 
+            // Fonte escalada e nítida
+            ctx.font = "bold 15px 'Outfit', sans-serif"; 
             ctx.fillText(sector.text, rad - 25, 5);
             ctx.restore();
         });
@@ -550,8 +571,7 @@ const firebaseConfig = {
 
         let start = null;
         const dur = 5000;
-        // THROTTLING DO ÁUDIO PARA EVITAR LAG
-        let lastAudioTime = 0; 
+        let lastTick = 0;
 
         function step(ts) {
             if(!start) start = ts;
@@ -566,20 +586,12 @@ const firebaseConfig = {
             try {
                 // Toca som a cada fatia MAS com limite de tempo (max 10 sons por segundo)
                 // sectors.length fatias em 360 graus = 60 graus por fatia
-                // Verificamos se mudou de "setor" visualmente
-                // Maneira mais simples para performance: usar tempo ou ângulo delta
-                
-                // Opção Simples e Performante: Tocar som se a velocidade for alta e passou tempo suficiente
                 const now = Date.now();
-                if (now - lastAudioTime > 80) { // Limitado a ~12 sons/segundo
-                     // Lógica simples: se estamos a rodar rápido, tocar som
-                     // Ou detetar cruzeiro de linha
-                     // Para mobile, o mais seguro é apenas limitar a frequência.
-                     // Aqui simplificamos: som aleatório enquanto gira rápido
-                     if (pct < 0.8) { // Só toca durante o giro rápido/médio
-                         sfx.tick();
-                         lastAudioTime = now;
-                     }
+                // Apenas toca som se estiver rápido o suficiente ou tempo tiver passado
+                // Otimização: só calcular se necessário
+                if (pct < 0.8) { 
+                     // Simplificação: tocar som com base no tempo para evitar lag de cálculo geométrico
+                     if (Math.random() > 0.8) sfx.tick(); 
                 }
             } catch(e) {}
 
