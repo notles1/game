@@ -111,6 +111,10 @@
             position: relative; z-index: 1; 
             width: 320px; height: 320px; 
             border-radius: 50%; transform-origin: center center;
+            /* PERFORMANCE FIX: Força a placa gráfica a gerir a rotação */
+            will-change: transform;
+            transform: translateZ(0); 
+            -webkit-font-smoothing: antialiased;
         }
 
         .pointer {
@@ -249,16 +253,20 @@
 
     function playTone(freq, type, dur) {
         if (!soundOn) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + dur);
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        } catch(e) {
+            console.warn("Audio error (safe ignore)", e);
+        }
     }
 
     const sfx = {
@@ -268,7 +276,7 @@
         error: () => playTone(150, 'sawtooth', 0.4)
     };
 
-const firebaseConfig = {
+ const firebaseConfig = {
 
   apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE",
 
@@ -285,7 +293,6 @@ const firebaseConfig = {
   measurementId: "G-GSYX6N4BXB"
 
 };
-
 
     function simpleHash(str) {
         let hash = 0;
@@ -497,6 +504,9 @@ const firebaseConfig = {
     }
 
     document.getElementById('btnSpin').addEventListener('click', () => {
+        // Assegura audio ativo
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        
         sfx.click();
         const btn = document.getElementById('btnSpin');
         btn.disabled = true; btn.innerText = "A GIRAR...";
@@ -548,7 +558,10 @@ const firebaseConfig = {
             const newAng = currentRotation + (finalRot - currentRotation) * ease;
             document.getElementById('wheel').style.transform = `rotate(${newAng}deg)`;
 
-            if (newAng - lastTick > sliceDeg) { sfx.tick(); lastTick = newAng; }
+            // Try-catch para audio tick para não bloquear animação
+            try {
+                if (newAng - lastTick > sliceDeg) { sfx.tick(); lastTick = newAng; }
+            } catch(e) {}
 
             if(progress < dur) requestAnimationFrame(step);
             else {
