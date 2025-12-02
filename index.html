@@ -111,9 +111,11 @@
             position: relative; z-index: 1; 
             width: 320px; height: 320px; 
             border-radius: 50%; transform-origin: center center;
-            /* PERFORMANCE FIX: Força a placa gráfica a gerir a rotação */
+            /* PERFORMANCE FIXES: Aceleração de Hardware */
             will-change: transform;
             transform: translateZ(0); 
+            backface-visibility: hidden;
+            perspective: 1000px;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -276,7 +278,7 @@
         error: () => playTone(150, 'sawtooth', 0.4)
     };
 
- const firebaseConfig = {
+const firebaseConfig = {
 
   apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE",
 
@@ -293,6 +295,7 @@
   measurementId: "G-GSYX6N4BXB"
 
 };
+
 
     function simpleHash(str) {
         let hash = 0;
@@ -547,7 +550,8 @@
 
         let start = null;
         const dur = 5000;
-        let lastTick = 0;
+        // THROTTLING DO ÁUDIO PARA EVITAR LAG
+        let lastAudioTime = 0; 
 
         function step(ts) {
             if(!start) start = ts;
@@ -560,7 +564,23 @@
 
             // Try-catch para audio tick para não bloquear animação
             try {
-                if (newAng - lastTick > sliceDeg) { sfx.tick(); lastTick = newAng; }
+                // Toca som a cada fatia MAS com limite de tempo (max 10 sons por segundo)
+                // sectors.length fatias em 360 graus = 60 graus por fatia
+                // Verificamos se mudou de "setor" visualmente
+                // Maneira mais simples para performance: usar tempo ou ângulo delta
+                
+                // Opção Simples e Performante: Tocar som se a velocidade for alta e passou tempo suficiente
+                const now = Date.now();
+                if (now - lastAudioTime > 80) { // Limitado a ~12 sons/segundo
+                     // Lógica simples: se estamos a rodar rápido, tocar som
+                     // Ou detetar cruzeiro de linha
+                     // Para mobile, o mais seguro é apenas limitar a frequência.
+                     // Aqui simplificamos: som aleatório enquanto gira rápido
+                     if (pct < 0.8) { // Só toca durante o giro rápido/médio
+                         sfx.tick();
+                         lastAudioTime = now;
+                     }
+                }
             } catch(e) {}
 
             if(progress < dur) requestAnimationFrame(step);
@@ -589,7 +609,8 @@
             sfx.error(); showMsg("GAME OVER. Tenta amanhã!", "error");
         } else {
             sfx.win(); showMsg("GANHASTE: " + premio + "!", "success");
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#00ff9d', '#ff0055', '#ffcc00'] });
+            // Reduzido para performance
+            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 }, colors: ['#00ff9d', '#ff0055', '#ffcc00'] });
         }
 
         const btn = document.getElementById('btnSpin');
