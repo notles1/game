@@ -37,7 +37,7 @@
         }
 
         .arcade-container {
-            width: 100%; max-width: 380px; /* Um pouco mais largo para caber a roda maior */
+            width: 100%; max-width: 380px;
             background: rgba(30, 19, 51, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 30px;
@@ -46,7 +46,7 @@
             text-align: center;
             position: relative;
             display: flex; flex-direction: column;
-            max-height: 95vh; /* Mais altura */
+            max-height: 95vh;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -94,10 +94,9 @@
         }
         .btn-export:hover { background: rgba(0, 255, 157, 0.1); }
 
-        /* RODA MAIOR */
         .wheel-wrapper {
             position: relative; 
-            width: 340px; height: 340px; /* AUMENTADO */
+            width: 340px; height: 340px; 
             margin: 10px auto;
             display: flex; align-items: center; justify-content: center;
         }
@@ -110,7 +109,7 @@
 
         canvas#wheel {
             position: relative; z-index: 1; 
-            width: 320px; height: 320px; /* AUMENTADO para coincidir com wrapper */
+            width: 320px; height: 320px; 
             border-radius: 50%; transform-origin: center center;
         }
 
@@ -142,6 +141,10 @@
         .terms-box p { color: #ccc; font-size: 12px; }
 
         #step-otp, #step-wheel { display: none; }
+        #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; box-sizing: border-box; }
+        #access-denied h2 { color: var(--neon-pink); font-size: 24px; margin-bottom: 10px; text-transform: uppercase; }
+        #access-denied p { color: #ccc; font-size: 16px; line-height: 1.6; }
+        .lock-icon { font-size: 60px; margin-bottom: 20px; }
         .badge { font-size: 9px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 800; display: inline-block; margin-left: 5px; }
         .bg-test { background: var(--neon-yellow); color: black; }
         .bg-admin { background: var(--neon-green); color: black; }
@@ -208,7 +211,6 @@
         <div class="wheel-wrapper">
             <div class="wheel-background"></div>
             <div class="pointer"></div>
-            <!-- Canvas com tamanho aumentado -->
             <canvas id="wheel" width="320" height="320"></canvas>
         </div>
 
@@ -298,7 +300,7 @@ const firebaseConfig = {
     const ADMIN_HASHES = ["770091061"]; 
     const ADMIN_B64 = "KzI1ODg2NTQ3NjMzMw=="; 
 
-    // --- TEXTOS CLAROS E UNIFORMES ---
+    // --- NOMES DOS PRÉMIOS (IGUAIS AO VISUAL) ---
     const sectors = [
         { color: "#00d9ff", text: "YANGO 10%", label: "Desconto Yango 10%", textCol: "#000" }, 
         { color: "#8a2be2", text: "ACESSÓRIOS", label: "Acessórios Infinix", textCol: "#fff" },    
@@ -337,7 +339,6 @@ const firebaseConfig = {
             ctx.rotate(angulo + arc / 2);
             ctx.textAlign = "right";
             ctx.fillStyle = sector.textCol;
-            // Fonte forçada para ser igual em todos e maior (16px)
             ctx.font = "bold 16px 'Outfit', sans-serif"; 
             ctx.fillText(sector.text, rad - 25, 5);
             ctx.restore();
@@ -502,12 +503,25 @@ const firebaseConfig = {
 
         const r = Math.random() * 100;
         let label = "Tente de Novo";
-        if(r < 0.1) label = "HOT 60 Pro+";
-        else if(r < 5) label = "Acessórios";
-        else if(r < 45) label = "Desconto Yango";
-
+        if(r < 0.1) label = "Infinix HOT 60 Pro+";     // 0.1%
+        else if(r < 5) label = "Acessórios Infinix";   // 4.9%
+        else if(r < 45) {
+            // Se for Yango, escolher aleatoriamente entre 10% ou 20%
+            label = Math.random() > 0.5 ? "Desconto Yango 10%" : "Desconto Yango 20%"; // 40%
+        }
+        
+        // 1. Encontrar índices
         const indices = [];
         sectors.forEach((s, i) => { if(s.label === label) indices.push(i); });
+        
+        // Se houver erro de string, fallback
+        if(indices.length === 0) {
+            console.error("Erro critico: Premio nao encontrado na roda", label);
+            // Fallback seguro
+            label = "Tente de Novo";
+            sectors.forEach((s, i) => { if(s.label === label) indices.push(i); });
+        }
+
         const winnerIndex = indices[Math.floor(Math.random() * indices.length)];
 
         const sliceDeg = 360 / sectors.length;
