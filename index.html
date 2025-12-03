@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Infinix & Yango Arcade</title>
     
-    <!-- Bibliotecas Externas (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -14,7 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- ESTILOS VISUAIS (CSS) --- */
         :root {
             --bg-deep: #130b21;
             --card-bg: #1e1333;
@@ -38,7 +36,6 @@
             overflow: hidden;
         }
 
-        /* Container Principal */
         .arcade-container {
             width: 100%; max-width: 380px;
             background: rgba(30, 19, 51, 0.95);
@@ -53,7 +50,6 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Luzes Decorativas */
         .lights-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .light-group { display: flex; gap: 8px; }
         .light { width: 8px; height: 8px; border-radius: 50%; background: #333; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
@@ -61,11 +57,9 @@
         .light.on-green { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
         .sound-toggle { font-size: 16px; cursor: pointer; opacity: 0.7; }
 
-        /* Tipografia */
         h1 { margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         p { color: #aaa; font-size: 13px; margin-top: 5px; margin-bottom: 20px; }
 
-        /* Inputs */
         .game-input {
             width: 100%; padding: 15px;
             background: #130b21;
@@ -77,7 +71,6 @@
         }
         .game-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 217, 255, 0.3); }
 
-        /* Botões */
         .btn-play {
             width: 100%; padding: 16px;
             background: linear-gradient(90deg, var(--neon-pink), #ff5e00);
@@ -98,10 +91,23 @@
         }
         .btn-export:hover { background: rgba(0, 255, 157, 0.1); }
 
-        /* A Roda */
+        /* STOCK PANEL */
+        #stock-panel {
+            margin-top: 15px; 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .stock-badge {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px;
+            font-size: 11px; text-align: left; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stock-badge b { color: var(--neon-green); }
+        .stock-warn b { color: var(--neon-pink); animation: pulse-text 1s infinite; }
+        @keyframes pulse-text { 50% { opacity: 0.5; } }
+
         .wheel-wrapper {
             position: relative; 
-            width: 320px; height: 320px;
+            width: 320px; height: 320px; 
             margin: 10px auto;
             display: flex; align-items: center; justify-content: center;
         }
@@ -116,7 +122,7 @@
             position: relative; z-index: 1; 
             width: 100%; height: 100%; 
             border-radius: 50%; transform-origin: center center;
-            will-change: transform; transform: translateZ(0); /* Aceleração GPU */
+            will-change: transform; transform: translateZ(0); 
             backface-visibility: hidden; perspective: 1000px;
             -webkit-font-smoothing: antialiased;
         }
@@ -129,7 +135,6 @@
             filter: drop-shadow(0 4px 5px rgba(0,0,0,0.5));
         }
 
-        /* Animações e Extras */
         .floating-icon { animation: float 3s ease-in-out infinite; display: inline-block; margin-bottom: 10px; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
@@ -140,29 +145,29 @@
         .legal-footer { margin-top: 20px; font-size: 10px; color: #666; }
         .legal-footer a { color: #888; text-decoration: none; margin: 0 5px; }
         
-        #terms-modal {
+        #terms-modal, #gps-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100; display: none;
+            background: rgba(0,0,0,0.95); z-index: 100; display: none;
             align-items: center; justify-content: center;
         }
         .terms-box { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 85%; max-width: 300px; text-align: left; border: 1px solid #333; }
         .terms-box h3 { color: var(--neon-green); margin-top: 0; }
         .terms-box p { color: #ccc; font-size: 12px; }
 
-        #step-otp, #step-wheel { display: none; }
+        #step-wheel { display: none; }
+        
         #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; box-sizing: border-box; }
         #access-denied h2 { color: var(--neon-pink); font-size: 24px; margin-bottom: 10px; text-transform: uppercase; }
         #access-denied p { color: #ccc; font-size: 16px; line-height: 1.6; }
         .lock-icon { font-size: 60px; margin-bottom: 20px; }
         
         .badge { font-size: 9px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 800; display: inline-block; margin-left: 5px; }
-        .bg-test { background: var(--neon-yellow); color: black; }
         .bg-admin { background: var(--neon-green); color: black; }
+        .bg-car { background: var(--neon-blue); color: black; }
     </style>
 </head>
 <body>
 
-<!-- TELA DE BLOQUEIO (SEGURANÇA QR CODE) -->
 <div id="access-denied">
     <div class="lock-icon">🔒</div>
     <h2>Acesso Exclusivo</h2>
@@ -170,19 +175,28 @@
     <p style="font-size:14px; margin-top:20px; color:var(--neon-blue)">Encontra um carro Yango e digitaliza o código para participar!</p>
 </div>
 
+<!-- MODAL GPS -->
+<div id="gps-modal" style="display:flex;">
+    <div class="terms-box" style="text-align:center;">
+        <div style="font-size:40px; margin-bottom:10px;">📍</div>
+        <h3>Confirmação GPS</h3>
+        <p>Precisamos validar que estás no carro para desbloquear o jogo.</p>
+        <button onclick="requestGPS()" class="btn-play">ATIVAR LOCALIZAÇÃO</button>
+    </div>
+</div>
+
 <!-- MODAL TERMOS -->
 <div id="terms-modal">
     <div class="terms-box">
         <h3>Regras Oficiais</h3>
-        <p>1. Limite de 1 tentativa diária por número.</p>
-        <p>2. O sistema deteta e bloqueia bots.</p>
-        <p>3. Prémios físicos levantam-se na loja Infinix.</p>
+        <p>1. Apenas 1 jogada por número, por dia.</p>
+        <p>2. Os vencedores serão contactados pela empresa.</p>
+        <p>3. Fraudes resultam em banimento.</p>
         <button onclick="document.getElementById('terms-modal').style.display='none'" class="btn-play" style="margin-top:15px; padding:10px;">FECHAR</button>
     </div>
 </div>
 
-<!-- APLICAÇÃO PRINCIPAL -->
-<div class="arcade-container" id="main-app">
+<div class="arcade-container" id="main-app" style="opacity:0.3; pointer-events:none;">
     <div class="lights-bar">
         <div class="light-group">
             <div class="light on-pink"></div>
@@ -192,53 +206,49 @@
         <div class="sound-toggle" onclick="toggleSound()" id="sound-btn">🔊</div>
     </div>
 
-    <!-- TELA 1: LOGIN -->
+    <!-- TELA 1: DADOS -->
     <div id="step-login">
         <div class="floating-icon">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#00d9ff" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
         </div>
         <h1>Arcade Login</h1>
-        <p>Entra para a zona de prémios.</p>
+        
+        <!-- Indicador do Carro -->
+        <div id="car-id-display" style="margin-bottom:15px;">
+            <span class="badge bg-car">Carro Não Detetado</span>
+        </div>
 
         <input type="text" id="inputName" class="game-input" placeholder="Teu Nome">
         <input type="email" id="inputEmail" class="game-input" placeholder="Teu Email">
-        <input type="tel" id="inputPhone" class="game-input" placeholder="+258 84 ...">
-        <div id="recaptcha-container" style="display:flex; justify-content:center; margin:10px 0;"></div>
+        <input type="tel" id="inputPhone" class="game-input" placeholder="84 / 85 / 86 / 87 ...">
         
-        <button onclick="enviarSMS()" id="btnSend" class="btn-play">START GAME</button>
+        <button onclick="enterGame()" id="btnSend" class="btn-play">ENTRAR & JOGAR</button>
     </div>
 
-    <!-- TELA 2: OTP -->
-    <div id="step-otp">
-        <h1>Segurança</h1>
-        <p>Código SMS enviado para <b id="lblPhone">...</b></p>
-        
-        <!-- Dica de teste apenas visível se offline -->
-        <div id="demo-hint" style="font-size:10px; color:#666; margin-bottom:10px; display:none;">(Test Code: 123456)</div>
-        <input type="number" id="inputCode" class="game-input" placeholder="000 000" style="font-size: 24px; letter-spacing: 5px; font-weight:800;">
-        
-        <button onclick="validarOTP()" class="btn-play">UNLOCK</button>
-        <button onclick="location.reload()" style="background:none; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancelar</button>
-    </div>
-
-    <!-- TELA 3: RODA -->
+    <!-- TELA 2: RODA -->
     <div id="step-wheel">
         <h1>Spin & Win <span id="admin-badge" class="badge bg-admin" style="display:none">ADMIN</span></h1>
-        <p>Boa sorte, <span id="lblName" style="color:var(--neon-green)"></span>!</p>
+        
+        <!-- STOCK PÚBLICO (Visível para todos) -->
+        <div id="stock-panel">
+            <div class="stock-badge" id="stock-hot60">📱 Hot 60: <b>...</b></div>
+            <div class="stock-badge" id="stock-acessorios">🎧 Acessórios: <b>...</b></div>
+            <div class="stock-badge" id="stock-yango20">🚕 -20% Yango: <b>...</b></div>
+            <div class="stock-badge" id="stock-yango10">🚕 -10% Yango: <b>...</b></div>
+        </div>
 
         <div class="wheel-wrapper">
             <div class="wheel-background"></div>
             <div class="pointer"></div>
-            <!-- Canvas será redimensionado pelo JS para alta resolução -->
-            <canvas id="wheel"></canvas> 
+            <canvas id="wheel"></canvas>
         </div>
 
         <button id="btnSpin" class="btn-play">GIRAR (FREE)</button>
-        <!-- Botão Admin -->
-        <button id="btnExport" class="btn-export" onclick="exportData()">📥 Exportar Dados (Excel)</button>
+        <!-- Botão WhatsApp removido -->
+        <button id="btnExport" class="btn-export" onclick="exportData()">📥 Exportar Vencedores (Excel)</button>
         
         <div class="legal-footer">
-            <a href="#" onclick="document.getElementById('terms-modal').style.display='flex'">Termos</a> | <a href="#">Privacidade</a>
+            <a href="#" onclick="document.getElementById('terms-modal').style.display='flex'">Termos</a>
         </div>
     </div>
 
@@ -246,70 +256,73 @@
 </div>
 
 <script>
-    // --- 1. CONFIGURAÇÃO DE ALTA RESOLUÇÃO (RETINA DISPLAY) ---
+    // --- CANVAS SETUP ---
     const canvas = document.querySelector("#wheel");
     const ctx = canvas.getContext("2d");
-    
-    // Tamanho Visual (CSS)
     const size = 320; 
-    // Densidade do ecrã
     const dpr = window.devicePixelRatio || 1;
-    
-    // Resolução Interna
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    
-    // Tamanho Exibido
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-    
-    // Normalizar escala
+    canvas.width = size * dpr; canvas.height = size * dpr;
+    canvas.style.width = `${size}px`; canvas.style.height = `${size}px`;
     ctx.scale(dpr, dpr);
-    
-    // Variáveis Globais de Desenho
-    const dia = size; 
-    const rad = dia / 2;
-    // --------------------------------------------------------
+    const dia = size; const rad = dia / 2;
 
-    // --- 2. VERIFICAÇÃO DE SEGURANÇA ---
+    // --- CAR ID & SEGURANÇA ---
+    const ALLOWED_CARS = ['carro_01', 'carro_02', 'carro_03'];
+    let currentCarId = null;
+
     function checkAccess() {
         const urlParams = new URLSearchParams(window.location.search);
-        const accessCode = urlParams.get('access');
-        if (accessCode !== 'yango_car') {
-            document.getElementById('main-app').style.display = 'none';
-            document.getElementById('access-denied').style.display = 'flex';
-            return false;
+        const id = urlParams.get('id'); 
+        
+        if (id && ALLOWED_CARS.includes(id)) {
+            currentCarId = id;
+            document.querySelector('#car-id-display span').innerText = `📍 ${id.toUpperCase()}`;
+            return true;
         }
-        return true;
+        
+        document.getElementById('gps-modal').style.display = 'none';
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('access-denied').style.display = 'flex';
+        return false;
     }
-    const hasValidLink = checkAccess();
+    
+    let hasValidLink = checkAccess();
 
-    // --- 3. SISTEMA DE ÁUDIO ---
+    let userLocation = null;
+    function requestGPS() {
+        if (!navigator.geolocation) { alert("GPS necessário."); return; }
+        const btn = document.querySelector('#gps-modal button');
+        btn.innerText = "A validar...";
+        
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                document.getElementById('gps-modal').style.display = 'none';
+                document.getElementById('main-app').style.opacity = '1';
+                document.getElementById('main-app').style.pointerEvents = 'all';
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                // ATIVA LISTENER REAL-TIME DE STOCK PARA TODOS
+                setupStockListener(); 
+            },
+            () => { alert("Ativa o GPS."); btn.innerText = "Tentar de Novo"; },
+            { enableHighAccuracy: true }
+        );
+    }
+
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
     let soundOn = true;
-
-    function toggleSound() {
-        soundOn = !soundOn;
-        document.getElementById('sound-btn').innerText = soundOn ? '🔊' : '🔇';
-    }
-
+    function toggleSound() { soundOn = !soundOn; document.getElementById('sound-btn').innerText = soundOn ? '🔊' : '🔇'; }
     function playTone(freq, type, dur) {
         if (!soundOn) return;
         try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + dur);
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + dur);
         } catch(e) {}
     }
-
     const sfx = {
         click: () => playTone(600, 'square', 0.1),
         tick: () => playTone(800, 'triangle', 0.05),
@@ -317,7 +330,6 @@
         error: () => playTone(150, 'sawtooth', 0.4)
     };
 
-    // --- 4. CONFIGURAÇÃO FIREBASE (SUBSTITUIR CHAVES AQUI) ---
   const firebaseConfig = {
 
   apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE",
@@ -337,168 +349,259 @@
 };
 
 
-    // --- 5. ADMINISTRAÇÃO ---
-    // O teu número (+258865476333) codificado em Base64
+    const INITIAL_STOCK = {
+        hot60: 20,
+        accessories: 20,
+        yango10: 100,
+        yango20: 100
+    };
+
     const ADMIN_B64 = "KzI1ODg2NTQ3NjMzMw=="; 
 
-    // --- 6. RODA ---
     const sectors = [
-        { color: "#00d9ff", text: "YANGO 10%", label: "Desconto Yango 10%", textCol: "#000" }, 
-        { color: "#8a2be2", text: "ACESSÓRIOS", label: "Acessórios Infinix", textCol: "#fff" },    
-        { color: "#221638", text: "TENTE", label: "Tente de Novo", textCol: "#aaa" }, 
-        { color: "#ffcc00", text: "HOT 60", label: "Infinix HOT 60 Pro+", textCol: "#000" },  
-        { color: "#ff0055", text: "YANGO 20%", label: "Desconto Yango 20%", textCol: "#fff" },  
-        { color: "#00ff9d", text: "ACESSÓRIOS", label: "Acessórios Infinix", textCol: "#000" }      
+        { color: "#00d9ff", text: "YANGO 10%", label: "yango10", textCol: "#000" }, 
+        { color: "#8a2be2", text: "ACESSÓRIOS", label: "accessories", textCol: "#fff" },    
+        { color: "#221638", text: "TENTE", label: "loss", textCol: "#aaa" }, 
+        { color: "#ffcc00", text: "HOT 60", label: "hot60", textCol: "#000" },  
+        { color: "#ff0055", text: "YANGO 20%", label: "yango20", textCol: "#fff" },  
+        { color: "#00ff9d", text: "ACESSÓRIOS", label: "accessories", textCol: "#000" }      
     ];
 
-    const PI = Math.PI;
-    const TAU = 2 * PI;
-    const arc = TAU / sectors.length;
+    const PI = Math.PI; const TAU = 2 * PI; const arc = TAU / sectors.length;
     let currentRotation = 0;
 
     function drawWheel() {
-        // Limpar usando as dimensões lógicas (size)
         ctx.clearRect(0, 0, size, size);
-        
         sectors.forEach((sector, i) => {
             const angulo = arc * i;
-            ctx.save();
-            ctx.beginPath();
+            ctx.save(); ctx.beginPath();
             ctx.fillStyle = sector.color;
-            ctx.moveTo(rad, rad);
-            ctx.arc(rad, rad, rad, angulo, angulo + arc);
-            ctx.lineTo(rad, rad);
-            ctx.fill();
-            
-            ctx.strokeStyle = "#130b21";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.translate(rad, rad);
-            ctx.rotate(angulo + arc / 2);
-            ctx.textAlign = "right";
-            ctx.fillStyle = sector.textCol;
-            // Fonte nítida
-            ctx.font = "bold 15px 'Outfit', sans-serif"; 
-            ctx.fillText(sector.text, rad - 25, 5);
-            ctx.restore();
+            ctx.moveTo(rad, rad); ctx.arc(rad, rad, rad, angulo, angulo + arc); ctx.lineTo(rad, rad); ctx.fill();
+            ctx.strokeStyle = "#130b21"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.translate(rad, rad); ctx.rotate(angulo + arc / 2); ctx.textAlign = "right";
+            ctx.fillStyle = sector.textCol; ctx.font = "bold 15px 'Outfit', sans-serif"; 
+            ctx.fillText(sector.text, rad - 25, 5); ctx.restore();
         });
-        
-        ctx.beginPath();
-        ctx.arc(rad, rad, 35, 0, TAU);
-        ctx.fillStyle = "#1e1333";
-        ctx.fill();
-        ctx.strokeStyle = "#00d9ff";
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(rad, rad, 35, 0, TAU); ctx.fillStyle = "#1e1333"; ctx.fill();
+        ctx.strokeStyle = "#00d9ff"; ctx.lineWidth = 3; ctx.stroke();
     }
     drawWheel();
 
-    // --- 7. LÓGICA DE APLICAÇÃO ---
-    let isOffline = false;
-    let isAdmin = false;
-    let confirmationResult = null;
-    let userData = {};
+    let isOffline = false; let isAdmin = false; let userData = {};
+    let db;
+    let currentStock = { ...INITIAL_STOCK }; // Variavel local para stock
 
-    try { if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); } catch(e) { ativarModoOffline(); }
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    try { 
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebase.auth().signInAnonymously().catch(e => console.warn("Auth anónima falhou"));
+    } catch(e) { isOffline=true; }
 
     window.onload = () => {
-        auth.languageCode = 'pt';
-        try {
-            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'normal', theme: 'dark' });
-            window.recaptchaVerifier.render();
-        } catch(e) { ativarModoOffline(); }
-        
         document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once:true});
+        if (!hasValidLink) {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('access-denied').style.display = 'flex';
+        }
     };
 
-    function ativarModoOffline() {
-        if(isOffline) return; isOffline = true;
-        document.getElementById('recaptcha-container').style.display = 'none';
-        document.getElementById('demo-hint').style.display = 'block';
-        // Desbloqueia visualização se estiver offline para teste
-        document.getElementById('main-app').style.display = 'flex';
-        document.getElementById('access-denied').style.display = 'none';
-    }
-
-    window.enviarSMS = () => {
+    async function enterGame() {
         sfx.click();
+        document.getElementById('msgBox').style.display = 'none';
+        
         const name = document.getElementById('inputName').value;
         const email = document.getElementById('inputEmail').value;
-        const phone = document.getElementById('inputPhone').value.trim();
+        let rawPhone = document.getElementById('inputPhone').value.trim();
         
-        if(!name || !email || !phone) return showMsg("Preencha todos os dados", "error");
-        userData = { name, email, phone };
+        if(!name || !email || !rawPhone) return showMsg("Preencha todos os dados", "error");
 
-        // Verifica Admin
-        const cleanPhone = phone.replace(/\s/g, '');
-        // Se for o teu número, ativa modo Admin e ignora verificação de link
-        if(btoa(cleanPhone) === ADMIN_B64) {
-            isAdmin = true; 
+        let cleanDigits = rawPhone.replace(/\D/g, ''); 
+        if (cleanDigits.startsWith('258') && cleanDigits.length > 9) cleanDigits = cleanDigits.substring(3);
+        if (cleanDigits.length !== 9) return showMsg("O número deve ter 9 dígitos", "error");
+        const validPrefixes = ['84', '85', '86', '87'];
+        if (!validPrefixes.some(prefix => cleanDigits.startsWith(prefix))) return showMsg("Prefixo inválido (84, 85, 86, 87)", "error");
+
+        const finalPhone = "+258" + cleanDigits;
+        
+        userData = { name, email, phone: finalPhone, location: userLocation, car_id: currentCarId || 'admin_bypass' };
+        
+        if(btoa(finalPhone) === ADMIN_B64) {
+            isAdmin = true;
             document.getElementById('admin-badge').style.display = 'inline-block';
             document.getElementById('btnExport').style.display = 'block';
             document.getElementById('main-app').style.display = 'flex';
             document.getElementById('access-denied').style.display = 'none';
+            setupStockListener(); // Ativa listener para admin
+            goToWheel();
+            return;
         }
+
+        if(!hasValidLink) { alert("Link inválido. Usa o QR Code do carro."); return; }
 
         const btn = document.getElementById('btnSend');
-        btn.disabled = true; btn.innerText = "A carregar...";
-        
-        if(isOffline) { setTimeout(irParaOTP, 800); return; }
-
-        firebase.auth().signInWithPhoneNumber(phone, window.recaptchaVerifier)
-            .then((res) => { confirmationResult = res; irParaOTP(); })
-            .catch(() => { ativarModoOffline(); irParaOTP(); });
-    };
-
-    function irParaOTP() {
-        document.getElementById('step-login').style.display = 'none';
-        document.getElementById('step-otp').style.display = 'block';
-        document.getElementById('lblPhone').innerText = userData.phone;
-    }
-
-    window.validarOTP = () => {
-        sfx.click();
-        const code = document.getElementById('inputCode').value;
-        if(isOffline) {
-            if(code === "123456") checkElegibilidade("off_" + userData.phone);
-            else showMsg("Código errado", "error");
-            return;
-        }
-        confirmationResult.confirm(code).then((res) => checkElegibilidade(res.user.uid))
-            .catch(() => showMsg("Erro código", "error"));
-    };
-
-    function checkElegibilidade(uid) {
-        if(isAdmin) { liberar(); return; }
-        
-        if (!hasValidLink) {
-            alert("Acesso Negado: Link Inválido.");
-            location.reload();
-            return;
-        }
+        btn.disabled = true; btn.innerText = "A entrar...";
 
         const today = new Date().toISOString().split('T')[0];
-        if(localStorage.getItem("spin_" + userData.phone) === today) { bloquear(); return; }
-        if(isOffline) { liberar(); return; }
+        
+        if(localStorage.getItem("spin_" + finalPhone) === today) {
+            btn.disabled = false; btn.innerText = "ENTRAR";
+            return showMsg("Já jogaste hoje! Tenta amanhã.", "error");
+        }
 
-        db.collection("participants").doc(uid).get().then((doc) => {
-            if(doc.exists && doc.data().last_spin_date === today) bloquear(); else liberar();
-        }).catch(() => liberar());
+        try {
+            const docRef = db.collection("participants").doc(finalPhone);
+            const docSnap = await docRef.get();
+            if (docSnap.exists && docSnap.data().last_spin_date === today) {
+                btn.disabled = false; btn.innerText = "ENTRAR";
+                return showMsg("Já jogaste hoje! Tenta amanhã.", "error");
+            }
+            goToWheel();
+        } catch (e) {
+            console.error("Firestore Error (Bypassing):", e);
+            goToWheel();
+        }
     }
 
-    function bloquear() {
-        sfx.error();
-        document.getElementById('step-otp').style.display = 'none';
-        showMsg("Já jogaste hoje! Volta amanhã.", "error");
-    }
-
-    function liberar() {
-        document.getElementById('step-otp').style.display = 'none';
+    function goToWheel() {
+        document.getElementById('step-login').style.display = 'none';
         document.getElementById('step-wheel').style.display = 'block';
         document.getElementById('lblName').innerText = userData.name.split(" ")[0];
+        document.getElementById('msgBox').style.display = 'none';
+    }
+
+    // --- STOCK EM TEMPO REAL (LISTENER) ---
+    function setupStockListener() {
+        if (isOffline || !db) { updateBadgesFromStock(INITIAL_STOCK); return; }
+        
+        // Escuta mudanças no documento em tempo real
+        db.collection("config").doc("inventory").onSnapshot((doc) => {
+            if (doc.exists) {
+                currentStock = doc.data(); // Atualiza variável local
+                updateBadgesFromStock(currentStock);
+            } else {
+                // Se não existe, cria
+                db.collection("config").doc("inventory").set(INITIAL_STOCK);
+                currentStock = INITIAL_STOCK;
+                updateBadgesFromStock(INITIAL_STOCK);
+            }
+        }, (error) => {
+            console.warn("Erro no listener de stock", error);
+            // Fallback para mostrar algo
+            updateBadgesFromStock(currentStock); 
+        });
+    }
+
+    function updateBadgesFromStock(s) {
+        updateBadge('stock-hot60', s.hot60);
+        updateBadge('stock-acessorios', s.accessories);
+        updateBadge('stock-yango20', s.yango20);
+        updateBadge('stock-yango10', s.yango10);
+    }
+
+    function updateBadge(id, qtd) {
+        const el = document.getElementById(id);
+        const name = el.innerText.split(':')[0];
+        el.innerHTML = `${name}: <b>${qtd !== undefined ? qtd : '?'}</b>`;
+        if (qtd < 5) el.classList.add('stock-warn');
+        else el.classList.remove('stock-warn');
+    }
+
+    document.getElementById('btnSpin').addEventListener('click', async () => {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        sfx.click();
+        const btn = document.getElementById('btnSpin');
+        btn.disabled = true; btn.innerText = "A GIRAR...";
+
+        // Usa o stock local atualizado pelo Listener
+        const stock = currentStock;
+
+        const r = Math.random() * 100;
+        let prizeKey = "loss"; 
+        let labelDisplay = "Tente de Novo";
+
+        if (r < 0.1 && stock.hot60 > 0) { prizeKey = "hot60"; labelDisplay = "Infinix HOT 60 Pro+"; } 
+        else if (r < 5 && stock.accessories > 0) { prizeKey = "accessories"; labelDisplay = "Acessórios Infinix"; } 
+        else if (r < 25 && stock.yango20 > 0) { prizeKey = "yango20"; labelDisplay = "Desconto Yango 20%"; } 
+        else if (r < 45 && stock.yango10 > 0) { prizeKey = "yango10"; labelDisplay = "Desconto Yango 10%"; } 
+        else { prizeKey = "loss"; labelDisplay = "Tente de Novo"; }
+
+        const indices = [];
+        sectors.forEach((s, i) => { if(s.label === prizeKey || (prizeKey === 'loss' && s.label === 'loss')) indices.push(i); });
+        if(indices.length === 0) {
+             sectors.forEach((s, i) => { if(s.label === 'loss') indices.push(i); });
+             prizeKey = 'loss'; labelDisplay = "Tente de Novo";
+        }
+        
+        const winnerIndex = indices[Math.floor(Math.random() * indices.length)];
+        const sliceDeg = 360 / sectors.length;
+        const winnerAngle = (winnerIndex * sliceDeg) + (sliceDeg / 2);
+        let targetRotation = 270 - winnerAngle;
+        while(targetRotation < 0) targetRotation += 360;
+        
+        const currentMod = currentRotation % 360;
+        let dist = targetRotation - currentMod;
+        if(dist < 0) dist += 360; 
+        const finalRot = currentRotation + 1800 + dist; 
+
+        let start = null; const dur = 5000;
+        function step(ts) {
+            if(!start) start = ts;
+            const progress = ts - start;
+            const pct = Math.min(progress / dur, 1);
+            const ease = 1 - Math.pow(1 - pct, 4); 
+            const newAng = currentRotation + (finalRot - currentRotation) * ease;
+            document.getElementById('wheel').style.transform = `rotate(${newAng}deg)`;
+            const now = Date.now();
+            if (pct < 0.8 && Math.random() > 0.85) sfx.tick(); 
+            if(progress < dur) requestAnimationFrame(step);
+            else {
+                currentRotation = finalRot;
+                processWin(prizeKey, labelDisplay);
+            }
+        }
+        requestAnimationFrame(step);
+    });
+
+    async function processWin(prizeKey, labelDisplay) {
+        const phoneToSave = userData.phone; 
+        const today = new Date().toISOString().split('T')[0];
+
+        // Decrement Stock (No need to update UI here, listener will do it)
+        if (prizeKey !== "loss" && !isAdmin && !isOffline && db) {
+            try {
+                await db.collection("config").doc("inventory").update({ 
+                    [prizeKey]: firebase.firestore.FieldValue.increment(-1) 
+                });
+            } catch(e) {}
+        }
+
+        if(!isAdmin) localStorage.setItem("spin_" + phoneToSave, today);
+        
+        if(!isOffline) {
+            try {
+                db.collection("participants").doc(phoneToSave).set({
+                    name: userData.name, email: userData.email, phone: phoneToSave,
+                    car_id: userData.car_id, 
+                    last_spin_date: today, prize: labelDisplay,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } catch(e) { console.error("Erro ao gravar", e); }
+        }
+
+        if(prizeKey === "loss") {
+            sfx.error(); showMsg("GAME OVER. Tenta amanhã!", "error");
+            document.getElementById('btnSpin').innerText = "VOLTE AMANHÃ";
+        } else {
+            sfx.win(); showMsg("GANHASTE: " + labelDisplay + "!", "success");
+            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 }, colors: ['#00ff9d', '#ff0055', '#ffcc00'] });
+            document.getElementById('btnSpin').style.display = 'none';
+        }
+
+        if(isAdmin) {
+            document.getElementById('btnSpin').style.display = 'block';
+            document.getElementById('btnSpin').innerText = "RESET (ADMIN)";
+            document.getElementById('btnSpin').disabled = false;
+        }
     }
 
     async function exportData() {
@@ -508,123 +611,32 @@
         
         try {
             let data = [];
-            if(isOffline) {
-                data = [{Nome: "Teste", Email: "teste@email.com", Telefone: "+25884000", Premio: "AIOT", Data: "2023-10-27"}];
-            } else {
-                const snapshot = await db.collection("participants").get();
-                snapshot.forEach(doc => {
-                    const d = doc.data();
+            const snapshot = await db.collection("participants").get();
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                if (d.prize && d.prize !== "Tente de Novo") {
                     data.push({
                         Nome: d.name,
-                        Email: d.email || "N/A",
-                        Telefone: d.phone,
-                        Premio: d.prize,
-                        Data: d.last_spin_date
+                        CarroID: d.car_id, 
+                        Email: d.email, Telefone: d.phone, 
+                        Premio: d.prize, Data: d.last_spin_date
                     });
-                });
-            }
+                }
+            });
 
-            if(data.length === 0) { alert("Sem dados."); btn.innerText = "📥 Exportar"; return; }
+            if(data.length === 0) { alert("Sem vencedores."); btn.innerText = "📥 Exportar"; return; }
 
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Participantes");
-            XLSX.writeFile(wb, "Infinix_Campanha.xlsx");
-            btn.innerText = "📥 Exportar Dados (Excel)";
+            XLSX.utils.book_append_sheet(wb, ws, "Vencedores");
+            XLSX.writeFile(wb, "Vencedores_Infinix.xlsx");
+            btn.innerText = "📥 Exportar Vencedores";
             
         } catch(e) {
             console.error(e);
-            alert("Erro de permissões.");
-            btn.innerText = "Erro ao Exportar";
+            alert("Erro ao exportar.");
+            btn.innerText = "Erro";
         }
-    }
-
-    document.getElementById('btnSpin').addEventListener('click', () => {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        sfx.click();
-        const btn = document.getElementById('btnSpin');
-        btn.disabled = true; btn.innerText = "A GIRAR...";
-
-        const r = Math.random() * 100;
-        let label = "Tente de Novo";
-        if(r < 0.1) label = "Infinix HOT 60 Pro+";     // 0.1%
-        else if(r < 5) label = "Acessórios Infinix";   // 4.9%
-        else if(r < 45) {
-            label = Math.random() > 0.5 ? "Desconto Yango 10%" : "Desconto Yango 20%"; // 40%
-        }
-        
-        const indices = [];
-        sectors.forEach((s, i) => { if(s.label === label) indices.push(i); });
-        
-        if(indices.length === 0) {
-            label = "Tente de Novo";
-            sectors.forEach((s, i) => { if(s.label === label) indices.push(i); });
-        }
-
-        const winnerIndex = indices[Math.floor(Math.random() * indices.length)];
-
-        const sliceDeg = 360 / sectors.length;
-        const winnerAngle = (winnerIndex * sliceDeg) + (sliceDeg / 2);
-        let targetRotation = 270 - winnerAngle;
-        while(targetRotation < 0) targetRotation += 360;
-        
-        const currentMod = currentRotation % 360;
-        let dist = targetRotation - currentMod;
-        if(dist < 0) dist += 360; 
-        
-        const finalRot = currentRotation + 1800 + dist; 
-
-        let start = null;
-        const dur = 5000;
-        let lastTick = 0;
-
-        function step(ts) {
-            if(!start) start = ts;
-            const progress = ts - start;
-            const pct = Math.min(progress / dur, 1);
-            const ease = 1 - Math.pow(1 - pct, 4); 
-            
-            const newAng = currentRotation + (finalRot - currentRotation) * ease;
-            document.getElementById('wheel').style.transform = `rotate(${newAng}deg)`;
-
-            // Throttled Audio
-            const now = Date.now();
-            if (pct < 0.8) { 
-                 if (Math.random() > 0.85) sfx.tick(); 
-            }
-
-            if(progress < dur) requestAnimationFrame(step);
-            else {
-                currentRotation = finalRot;
-                finalizar(label);
-            }
-        }
-        requestAnimationFrame(step);
-    });
-
-    function finalizar(premio) {
-        if(!isAdmin) localStorage.setItem("spin_" + userData.phone, new Date().toISOString().split('T')[0]);
-        
-        const user = firebase.auth().currentUser;
-        if(user && !isOffline) {
-            db.collection("participants").doc(user.uid).set({
-                name: userData.name, 
-                email: userData.email, 
-                phone: userData.phone,
-                last_spin_date: new Date().toISOString().split('T')[0], prize: premio
-            }, { merge: true });
-        }
-
-        if(premio === "Tente de Novo") {
-            sfx.error(); showMsg("GAME OVER. Tenta amanhã!", "error");
-        } else {
-            sfx.win(); showMsg("GANHASTE: " + premio + "!", "success");
-            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 }, colors: ['#00ff9d', '#ff0055', '#ffcc00'] });
-        }
-
-        const btn = document.getElementById('btnSpin');
-        btn.innerText = isAdmin ? "RESET (ADMIN)" : "VOLTE AMANHÃ";
-        if(isAdmin) btn.disabled = false;
     }
 
     function showMsg(txt, type) {
