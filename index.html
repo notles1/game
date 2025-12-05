@@ -105,6 +105,13 @@
         .stock-warn b { color: var(--neon-pink); animation: pulse-text 1s infinite; }
         @keyframes pulse-text { 50% { opacity: 0.5; } }
 
+        /* CONTADOR TENTATIVAS */
+        #attempts-display {
+            margin-top: 10px; background: rgba(255, 0, 85, 0.2); border: 1px solid var(--neon-pink);
+            color: #fff; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold;
+            display: none;
+        }
+
         .wheel-wrapper {
             position: relative; 
             width: 320px; height: 320px; 
@@ -220,6 +227,8 @@
 
         <input type="text" id="inputName" class="game-input" placeholder="Teu Nome">
         <input type="email" id="inputEmail" class="game-input" placeholder="Teu Email">
+        
+        <!-- CAMPO TELEFONE -->
         <input type="tel" id="inputPhone" class="game-input" placeholder="84 / 85 / 86 / 87 ...">
         
         <button onclick="enterGame()" id="btnSend" class="btn-play">ENTRAR & JOGAR</button>
@@ -229,13 +238,16 @@
     <div id="step-wheel">
         <h1>Spin & Win <span id="admin-badge" class="badge bg-admin" style="display:none">ADMIN</span></h1>
         
-        <!-- STOCK PÚBLICO (Visível para todos) -->
+        <!-- STOCK PÚBLICO -->
         <div id="stock-panel">
             <div class="stock-badge" id="stock-hot60">📱 Hot 60: <b>...</b></div>
             <div class="stock-badge" id="stock-acessorios">🎧 Acessórios: <b>...</b></div>
             <div class="stock-badge" id="stock-yango20">🚕 -20% Yango: <b>...</b></div>
             <div class="stock-badge" id="stock-yango10">🚕 -10% Yango: <b>...</b></div>
         </div>
+        
+        <!-- CONTADOR -->
+        <div id="attempts-display">Jogada 1 de 3</div>
 
         <div class="wheel-wrapper">
             <div class="wheel-background"></div>
@@ -244,8 +256,8 @@
         </div>
 
         <button id="btnSpin" class="btn-play">GIRAR (FREE)</button>
-        <!-- Botão WhatsApp removido -->
-        <button id="btnExport" class="btn-export" onclick="exportData()">📥 Exportar Vencedores (Excel)</button>
+        <!-- BOTÃO EXPORTAR (ADMIN ONLY) -->
+        <button id="btnExport" class="btn-export" onclick="exportData()">📥 Exportar Vencedores</button>
         
         <div class="legal-footer">
             <a href="#" onclick="document.getElementById('terms-modal').style.display='flex'">Termos</a>
@@ -256,7 +268,10 @@
 </div>
 
 <script>
-    // --- CANVAS SETUP ---
+    // --- 1. INTEGRAÇÃO GOOGLE SHEETS ---
+    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdt--iC4oRJdde0SUahq17Pi5gdxWv6ctqv-7ricHgZC9IjjdZstXTPQ86CcWRu0IW/exec"
+
+    // --- 2. SETUP CANVAS ---
     const canvas = document.querySelector("#wheel");
     const ctx = canvas.getContext("2d");
     const size = 320; 
@@ -266,7 +281,7 @@
     ctx.scale(dpr, dpr);
     const dia = size; const rad = dia / 2;
 
-    // --- CAR ID & SEGURANÇA ---
+    // --- 3. SEGURANÇA DE ACESSO ---
     const ALLOWED_CARS = ['carro_01', 'carro_02', 'carro_03'];
     let currentCarId = null;
 
@@ -277,38 +292,24 @@
         if (id && ALLOWED_CARS.includes(id)) {
             currentCarId = id;
             document.querySelector('#car-id-display span').innerText = `📍 ${id.toUpperCase()}`;
+            // Ativa app (GPS removido, ativa direto)
+            document.getElementById('gps-modal').style.display = 'none';
+            document.getElementById('main-app').style.opacity = '1';
+            document.getElementById('main-app').style.pointerEvents = 'all';
             return true;
         }
-        
         document.getElementById('gps-modal').style.display = 'none';
         document.getElementById('main-app').style.display = 'none';
         document.getElementById('access-denied').style.display = 'flex';
         return false;
     }
-    
+    // Executa ao iniciar
     let hasValidLink = checkAccess();
 
-    let userLocation = null;
-    function requestGPS() {
-        if (!navigator.geolocation) { alert("GPS necessário."); return; }
-        const btn = document.querySelector('#gps-modal button');
-        btn.innerText = "A validar...";
-        
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                document.getElementById('gps-modal').style.display = 'none';
-                document.getElementById('main-app').style.opacity = '1';
-                document.getElementById('main-app').style.pointerEvents = 'all';
-                if(audioCtx.state === 'suspended') audioCtx.resume();
-                // ATIVA LISTENER REAL-TIME DE STOCK PARA TODOS
-                setupStockListener(); 
-            },
-            () => { alert("Ativa o GPS."); btn.innerText = "Tentar de Novo"; },
-            { enableHighAccuracy: true }
-        );
-    }
+    // GPS REMOVIDO - Função dummy apenas para não quebrar referências
+    function requestGPS() { console.log("GPS bypassed"); }
 
+    // --- 4. AUDIO ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
     let soundOn = true;
@@ -330,6 +331,7 @@
         error: () => playTone(150, 'sawtooth', 0.4)
     };
 
+    // --- 5. FIREBASE CONFIG (COLE SUAS CHAVES AQUI) ---
   const firebaseConfig = {
 
   apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE",
@@ -347,16 +349,9 @@
   measurementId: "G-GSYX6N4BXB"
 
 };
-
-
-    const INITIAL_STOCK = {
-        hot60: 20,
-        accessories: 20,
-        yango10: 100,
-        yango20: 100
-    };
-
+    const INITIAL_STOCK = { hot60: 20, accessories: 20, yango10: 100, yango20: 100 };
     const ADMIN_B64 = "KzI1ODg2NTQ3NjMzMw=="; 
+    const MAX_SPINS = 3;
 
     const sectors = [
         { color: "#00d9ff", text: "YANGO 10%", label: "yango10", textCol: "#000" }, 
@@ -389,20 +384,16 @@
 
     let isOffline = false; let isAdmin = false; let userData = {};
     let db;
-    let currentStock = { ...INITIAL_STOCK }; // Variavel local para stock
+    let dailySpinsCount = 0;
 
     try { 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-        firebase.auth().signInAnonymously().catch(e => console.warn("Auth anónima falhou"));
+        firebase.auth().signInAnonymously().catch(e => console.warn("Auth anonima"));
     } catch(e) { isOffline=true; }
 
     window.onload = () => {
         document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once:true});
-        if (!hasValidLink) {
-            document.getElementById('main-app').style.display = 'none';
-            document.getElementById('access-denied').style.display = 'flex';
-        }
     };
 
     async function enterGame() {
@@ -423,7 +414,7 @@
 
         const finalPhone = "+258" + cleanDigits;
         
-        userData = { name, email, phone: finalPhone, location: userLocation, car_id: currentCarId || 'admin_bypass' };
+        userData = { name, email, phone: finalPhone, car_id: currentCarId || 'admin_bypass' };
         
         if(btoa(finalPhone) === ADMIN_B64) {
             isAdmin = true;
@@ -431,7 +422,7 @@
             document.getElementById('btnExport').style.display = 'block';
             document.getElementById('main-app').style.display = 'flex';
             document.getElementById('access-denied').style.display = 'none';
-            setupStockListener(); // Ativa listener para admin
+            updateStockDisplay();
             goToWheel();
             return;
         }
@@ -451,13 +442,25 @@
         try {
             const docRef = db.collection("participants").doc(finalPhone);
             const docSnap = await docRef.get();
-            if (docSnap.exists && docSnap.data().last_spin_date === today) {
-                btn.disabled = false; btn.innerText = "ENTRAR";
-                return showMsg("Já jogaste hoje! Tenta amanhã.", "error");
-            }
+            if (docSnap.exists) {
+                const data = docSnap.data();
+                if (data.last_spin_date === today) {
+                    if (data.daily_spins >= MAX_SPINS) {
+                        btn.disabled = false; btn.innerText = "ENTRAR";
+                        return showMsg("Já usaste as 3 jogadas de hoje!", "error");
+                    } else {
+                        dailySpinsCount = data.daily_spins || 0;
+                    }
+                } else { dailySpinsCount = 0; }
+            } else { dailySpinsCount = 0; }
+            
+            updateStockDisplay(); 
             goToWheel();
         } catch (e) {
             console.error("Firestore Error (Bypassing):", e);
+            // Em caso de erro, deixa entrar (Fail-safe)
+            dailySpinsCount = 0;
+            updateStockDisplay(); 
             goToWheel();
         }
     }
@@ -467,28 +470,23 @@
         document.getElementById('step-wheel').style.display = 'block';
         document.getElementById('lblName').innerText = userData.name.split(" ")[0];
         document.getElementById('msgBox').style.display = 'none';
+        
+        // Atualizar texto de tentativas
+        const attemptsLeft = MAX_SPINS - dailySpinsCount;
+        document.getElementById('attempts-display').style.display = 'block';
+        document.getElementById('attempts-display').innerText = `Jogada ${dailySpinsCount + 1} de ${MAX_SPINS}`;
     }
 
-    // --- STOCK EM TEMPO REAL (LISTENER) ---
-    function setupStockListener() {
-        if (isOffline || !db) { updateBadgesFromStock(INITIAL_STOCK); return; }
-        
-        // Escuta mudanças no documento em tempo real
-        db.collection("config").doc("inventory").onSnapshot((doc) => {
-            if (doc.exists) {
-                currentStock = doc.data(); // Atualiza variável local
-                updateBadgesFromStock(currentStock);
-            } else {
-                // Se não existe, cria
-                db.collection("config").doc("inventory").set(INITIAL_STOCK);
-                currentStock = INITIAL_STOCK;
-                updateBadgesFromStock(INITIAL_STOCK);
-            }
-        }, (error) => {
-            console.warn("Erro no listener de stock", error);
-            // Fallback para mostrar algo
-            updateBadgesFromStock(currentStock); 
-        });
+    async function updateStockDisplay() {
+        try {
+            if (!db) { updateBadgesFromStock(INITIAL_STOCK); return; }
+            const stockDoc = await db.collection("config").doc("inventory").get();
+            let s = INITIAL_STOCK;
+            if (stockDoc.exists) { s = stockDoc.data(); }
+            updateBadgesFromStock(s);
+        } catch(e) { 
+            updateBadgesFromStock(INITIAL_STOCK);
+        }
     }
 
     function updateBadgesFromStock(s) {
@@ -512,8 +510,17 @@
         const btn = document.getElementById('btnSpin');
         btn.disabled = true; btn.innerText = "A GIRAR...";
 
-        // Usa o stock local atualizado pelo Listener
-        const stock = currentStock;
+        let stock = { ...INITIAL_STOCK };
+        let stockDocRef = null;
+
+        if (!isOffline && db) {
+            try {
+                stockDocRef = db.collection("config").doc("inventory");
+                const stockSnap = await stockDocRef.get();
+                if (stockSnap.exists) { stock = stockSnap.data(); }
+                else { await stockDocRef.set(INITIAL_STOCK); }
+            } catch(e) {}
+        }
 
         const r = Math.random() * 100;
         let prizeKey = "loss"; 
@@ -556,45 +563,78 @@
             if(progress < dur) requestAnimationFrame(step);
             else {
                 currentRotation = finalRot;
-                processWin(prizeKey, labelDisplay);
+                processWin(prizeKey, labelDisplay, stockDocRef);
             }
         }
         requestAnimationFrame(step);
     });
 
-    async function processWin(prizeKey, labelDisplay) {
+    async function processWin(prizeKey, labelDisplay, stockDocRef) {
         const phoneToSave = userData.phone; 
         const today = new Date().toISOString().split('T')[0];
 
-        // Decrement Stock (No need to update UI here, listener will do it)
-        if (prizeKey !== "loss" && !isAdmin && !isOffline && db) {
+        // Decrement Stock (Só se ganhou e não for admin)
+        if (prizeKey !== "loss" && !isAdmin && !isOffline && stockDocRef) {
             try {
-                await db.collection("config").doc("inventory").update({ 
-                    [prizeKey]: firebase.firestore.FieldValue.increment(-1) 
-                });
+                await stockDocRef.update({ [prizeKey]: firebase.firestore.FieldValue.increment(-1) });
+                updateStockDisplay();
             } catch(e) {}
         }
+
+        // Atualizar contador local
+        dailySpinsCount++;
+        const attemptsLeft = MAX_SPINS - dailySpinsCount;
 
         if(!isAdmin) localStorage.setItem("spin_" + phoneToSave, today);
         
         if(!isOffline) {
             try {
-                db.collection("participants").doc(phoneToSave).set({
+                // 1. ATUALIZAR PARTICIPANTE (Contagem de spins)
+                const participantData = {
                     name: userData.name, email: userData.email, phone: phoneToSave,
                     car_id: userData.car_id, 
-                    last_spin_date: today, prize: labelDisplay,
+                    last_spin_date: today, 
+                    daily_spins: dailySpinsCount,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
+                };
+                
+                await db.collection("participants").doc(phoneToSave).set(participantData, { merge: true });
+                
+                // 2. REGISTAR VENCEDOR NA COLEÇÃO "WINNERS" (Apenas se ganhou)
+                if(prizeKey !== "loss") {
+                    const winnerData = {
+                        ...participantData,
+                        prize: labelDisplay,
+                        win_date: new Date()
+                    };
+                    
+                    await db.collection("winners").add(winnerData);
+                    
+                    // Webhook para Sheets
+                    if(SHEET_WEBHOOK_URL) {
+                       fetch(SHEET_WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(winnerData) });
+                    }
+                }
+
             } catch(e) { console.error("Erro ao gravar", e); }
         }
 
         if(prizeKey === "loss") {
-            sfx.error(); showMsg("GAME OVER. Tenta amanhã!", "error");
-            document.getElementById('btnSpin').innerText = "VOLTE AMANHÃ";
+            sfx.error(); showMsg("GAME OVER. Tenta de novo!", "error");
         } else {
             sfx.win(); showMsg("GANHASTE: " + labelDisplay + "!", "success");
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 }, colors: ['#00ff9d', '#ff0055', '#ffcc00'] });
-            document.getElementById('btnSpin').style.display = 'none';
+        }
+
+        const btn = document.getElementById('btnSpin');
+        if (attemptsLeft > 0) {
+            btn.innerText = `GIRAR (${attemptsLeft} RESTANTES)`;
+            btn.disabled = false;
+            document.getElementById('attempts-display').innerText = `Jogada ${dailySpinsCount + 1} de ${MAX_SPINS}`;
+        } else {
+            btn.innerText = "VOLTA AMANHÃ";
+            btn.disabled = true;
+            document.getElementById('attempts-display').innerText = "0 Jogadas Restantes";
         }
 
         if(isAdmin) {
@@ -604,6 +644,7 @@
         }
     }
 
+    // Função de exportação: Lê da tabela "WINNERS"
     async function exportData() {
         if(!isAdmin) return;
         const btn = document.getElementById('btnExport');
@@ -611,17 +652,16 @@
         
         try {
             let data = [];
-            const snapshot = await db.collection("participants").get();
+            // Agora lemos a coleção correta: WINNERS
+            const snapshot = await db.collection("winners").get();
             snapshot.forEach(doc => {
                 const d = doc.data();
-                if (d.prize && d.prize !== "Tente de Novo") {
-                    data.push({
-                        Nome: d.name,
-                        CarroID: d.car_id, 
-                        Email: d.email, Telefone: d.phone, 
-                        Premio: d.prize, Data: d.last_spin_date
-                    });
-                }
+                data.push({
+                    Nome: d.name,
+                    CarroID: d.car_id, 
+                    Email: d.email, Telefone: d.phone, 
+                    Premio: d.prize, Data: d.last_spin_date
+                });
             });
 
             if(data.length === 0) { alert("Sem vencedores."); btn.innerText = "📥 Exportar"; return; }
