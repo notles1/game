@@ -5,32 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Infinix & Yango Christmas</title>
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <!-- Efeitos -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- Fonte Festiva e Moderna -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* PALETA DE NATAL ELEGANTE */
             --xmas-red: #C31515;
             --xmas-green: #086A33;
             --xmas-gold: #F2C94C;
             --snow-white: #FFFFFF;
-            
-            /* CORES DISTINTAS PARA CARROS */
-            --car-1: #00d9ff; /* Ciano */
-            --car-2: #ff00ff; /* Magenta */
-            --car-3: #ffd700; /* Dourado */
-            
-            /* NEON ACCENTS */
+            --car-1: #00d9ff;
+            --car-2: #ff00ff;
+            --car-3: #ffd700;
             --neon-green: #00ea77; 
             --neon-red: #ff3b30;
         }
@@ -55,11 +46,10 @@
         
         body::before {
             content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.1); /* Overlay ligeiramente mais escuro para contraste */
+            background: rgba(0,0,0,0.1);
             z-index: 0;
         }
 
-        /* ANIMAÇÃO DE NEVE */
         .snowflake {
             position: absolute; top: -10px; z-index: 1; color: #fff; opacity: 0.8;
             text-shadow: 0 0 5px rgba(255,255,255,0.5);
@@ -67,10 +57,9 @@
         }
         @keyframes fall { to { transform: translateY(105vh); } }
 
-        /* CARD PRINCIPAL */
         .arcade-container {
             width: 90%; max-width: 380px;
-            background: rgba(20, 20, 30, 0.4); /* Mais translúcido */
+            background: rgba(20, 20, 30, 0.4);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border-radius: 30px;
@@ -88,7 +77,6 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* LOGOS */
         .logos-area {
             display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 25px;
         }
@@ -98,7 +86,6 @@
         }
         .x-divider { color: var(--snow-white); font-size: 20px; font-weight: 300; opacity: 0.8; }
 
-        /* INPUTS */
         .game-input {
             width: 100%; padding: 16px;
             background: rgba(255, 255, 255, 0.1);
@@ -115,7 +102,6 @@
         }
         .game-input::placeholder { color: rgba(255,255,255,0.5); }
 
-        /* BOTÕES */
         .btn-play {
             width: 100%; padding: 18px;
             background: linear-gradient(135deg, var(--neon-red), #b91c1c);
@@ -135,43 +121,22 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
-        .btn-export {
-            background: transparent; border: 1px solid var(--neon-green); color: var(--neon-green);
-            padding: 10px 15px; border-radius: 12px; font-size: 12px; font-weight: 700;
-            cursor: pointer; margin-top: 15px; display: none; width: 100%; text-transform: uppercase;
-        }
-        .btn-export:hover { background: rgba(0, 234, 119, 0.1); }
-
-        /* PAINEL DE STOCK */
-        #stock-panel {
-            margin-top: 0; margin-bottom: 20px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; display: none;
-        }
-        .stock-badge {
-            background: rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 8px;
-            font-size: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1);
-            display: flex; justify-content: space-between; align-items: center; color: #ddd;
-        }
-        .stock-badge b { color: var(--neon-green); }
-
-        /* --- NOVA RODA INFINIX HTML/CSS --- */
         .wheel-wrapper {
             position: relative; 
-            width: 320px; /* Ajustado para caber bem */
+            width: 320px;
             height: 320px; 
             margin: 10px auto 20px;
             display: flex; align-items: center; justify-content: center;
             
             border-radius: 50%;
-            background: #005b96; /* Anel Azul Escuro */
+            background: #005b96;
             padding: 10px;
             box-shadow: 
                 0 0 0 6px #0d001a, 
-                0 0 40px rgba(255, 0, 0, 0.3), /* Glow Natalino */
+                0 0 40px rgba(255, 0, 0, 0.3),
                 0 0 20px rgba(0, 255, 0, 0.1);
         }
 
-        /* Luzes */
         .lights-ring {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%; pointer-events: none;
@@ -185,43 +150,33 @@
         @keyframes rotateRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* Roda Giratória Interior */
         .wheel-inner {
             width: 100%; height: 100%; border-radius: 50%;
             position: relative; overflow: hidden;
             border: 4px solid #fff; box-sizing: border-box;
-            /* Transição de rotação */
             transition: transform 4s cubic-bezier(0.15, 0.9, 0.3, 1);
             
-            /* GRADIENTES PARA 6 FATIAS (60 graus cada)
-               Começa em -30deg para centrar a primeira fatia (Top)
-            */
             background: 
                 radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.2) 30%),
                 conic-gradient(
-                from -30deg,
-                /* Slice 1 (500 MT): Vermelho */
-                #ff0000 0deg, #8b0000 60deg,
-                /* Slice 2 (1000 MT): Prata/Branco */
-                #ffffff 60deg, #b0bec5 120deg,
-                /* Slice 3 (2000 MT): Dourado */
-                #ffd700 120deg, #ff8f00 180deg,
-                /* Slice 4 (Powerbank): Vermelho */
-                #ff0000 180deg, #8b0000 240deg,
-                /* Slice 5 (Watch): Verde */
-                #00ff00 240deg, #006400 300deg,
-                /* Slice 6 (Buds): Dourado */
-                #ffd700 300deg, #ff8f00 360deg
+                from -22.5deg,
+                #ff0000 0deg, #8b0000 45deg,   /* 500 MT */
+                #131313 45deg, #000000 90deg,  /* Tente Outro Dia */
+                #ffffff 90deg, #b0bec5 135deg, /* 1000 MT */
+                #ff0000 135deg, #8b0000 180deg,/* Powerbank */
+                #131313 180deg, #030303 225deg,/* Tente Outro Dia */
+                #ffd700 225deg, #ff8f00 270deg,/* 2000 MT */
+                #00ff00 270deg, #006400 315deg,/* Watch */
+                #ffd700 315deg, #ff8f00 360deg /* Buds */
             );
         }
 
-        /* Itens dentro da roda */
         .prize-item {
             position: absolute; top: 50%; left: 50%; width: 0; height: 0;
         }
         .prize-content {
             position: absolute;
-            left: -40px; top: -135px; /* Posição ajustada para 320px */
+            left: -40px; top: -135px;
             width: 80px; text-align: center;
             color: #fff; font-weight: 800; font-size: 12px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
@@ -232,10 +187,8 @@
             margin: 0 auto 3px auto; object-fit: contain;
             filter: drop-shadow(0 4px 2px rgba(0,0,0,0.3));
         }
-        /* Ajuste de cor para textos em fundos claros */
         .text-dark { color: #b71c1c; text-shadow: none; }
 
-        /* Seta (Corrigida de .pointer para .marker para coincidir com HTML) */
         .marker {
             position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
             z-index: 20; width: 40px; height: 50px;
@@ -244,7 +197,6 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
-        /* Botão Central */
         .center-hub {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 70px; height: 70px;
@@ -257,11 +209,9 @@
         }
         .center-hub:active { transform: translate(-50%, -50%) scale(0.95); }
 
-        /* TEXTOS */
         h1 { margin: 0 0 5px 0; font-size: 26px; color: var(--white); font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         p { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 0; margin-bottom: 20px; line-height: 1.4; }
 
-        /* MODAL DE VITORIA */
         #winner-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 100;
@@ -280,7 +230,6 @@
         @keyframes popIn { to { transform: scale(1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* TOAST DE ERRO (Topo) */
         #toast-container {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 90%; max-width: 350px;
@@ -296,10 +245,8 @@
         .toast.success { border-left-color: var(--neon-green); color: #047857; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* UTILITARIOS */
         .legal-footer { margin-top: 25px; font-size: 10px; color: rgba(255,255,255,0.4); }
         .badge { font-size: 9px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; font-weight: 800; display: inline-block; margin-left: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); }
-        .bg-admin { background: var(--neon-green); color: black; }
         .bg-car-01 { background: var(--car-1); color: #000; text-shadow: none; }
         .bg-car-02 { background: var(--car-2); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
         .bg-car-03 { background: var(--car-3); color: #000; text-shadow: none; }
@@ -325,25 +272,20 @@
 </head>
 <body>
 
-<!-- NEVE -->
 <div id="snow-container"></div>
-
-<!-- TOASTS -->
 <div id="toast-container"></div>
 
-<!-- MODAL VENCEDOR -->
 <div id="winner-modal">
     <div class="winner-card">
         <div style="font-size: 50px; margin-bottom: 10px;">🎉</div>
         <h2 style="color:var(--xmas-red); margin:0 0 5px 0; font-size: 24px;">PARABÉNS!</h2>
-        <p style="color:#555; font-size:14px; margin:0;">Ganhaste:</p>
+        <p style="color:#555; font-size:14px; margin:0;">Resultado:</p>
         <h1 id="winner-prize" style="color:var(--xmas-green); font-size:28px; margin:15px 0; text-shadow:none;">...</h1>
-        <p style="font-size:12px; color:#888;">Mostra este ecrã ao motorista.</p>
+        <p id="winner-msg" style="font-size:12px; color:#888;">Por favor, aguarde uma chamada da nossa equipa.</p>
         <button onclick="closeWinnerModal()" class="btn-play" style="margin-top:20px; padding:12px; width:auto; min-width:150px; animation:none;">FECHAR</button>
     </div>
 </div>
 
-<!-- ACESSO NEGADO -->
 <div id="access-denied">
     <div class="denied-box">
         <h2 style="color:var(--neon-green); margin:0 0 10px 0;">Acesso Exclusivo 🎄</h2>
@@ -352,22 +294,18 @@
     </div>
 </div>
 
-<!-- APP PRINCIPAL -->
 <div class="arcade-container" id="main-app">
     
-    <!-- LOGOS -->
     <div class="logos-area">
         <img src="logo-min.png" alt="Infinix" class="logo-img">
         <span class="x-divider">×</span>
         <img src="logo yango-min.png" alt="Yango" class="logo-img">
     </div>
 
-    <!-- TELA 1: DADOS -->
     <div id="step-login">
         <h1>Natal Premiado</h1>
         <p>Preenche os dados para girar a roda.</p>
 
-        <!-- Indicador do Carro -->
         <div id="car-id-display" style="margin-bottom:20px; display:none;">
             <span id="car-id-text" class="badge">Carro detetado</span>
         </div>
@@ -379,33 +317,16 @@
         <button onclick="enterGame()" id="btnSend" class="btn-play">ENTRAR</button>
     </div>
 
-    <!-- TELA 2: RODA (AGORA EM HTML PURO) -->
     <div id="step-wheel">
-        <h1>Boa Sorte! <span id="admin-badge" class="badge bg-admin" style="display:none">ADMIN</span></h1>
+        <h1>Boa Sorte!</h1>
         <p>Gira a roda da sorte.</p>
 
-        <!-- STOCK PÚBLICO -->
-        <div id="stock-panel">
-            <div class="stock-badge" id="s_500">💵 500: <b>..</b></div>
-            <div class="stock-badge" id="s_1000">💵 1000: <b>..</b></div>
-            <div class="stock-badge" id="s_2000">💵 2000: <b>..</b></div>
-            <div class="stock-badge" id="s_pbank">🔋 bank: <b>..</b></div>
-            <div class="stock-badge" id="s_watch">⌚ Watch: <b>..</b></div>
-            <div class="stock-badge" id="s_buds">🎧 Buds: <b>..</b></div>
-        </div>
-
-        <!-- ESTRUTURA DA RODA INFINIX -->
         <div class="wheel-wrapper">
-            <div class="marker"></div> <!-- Seta (Agora coincide com CSS .marker) -->
-            <div class="lights-ring" id="lights"></div> <!-- Luzes -->
+            <div class="marker"></div>
+            <div class="lights-ring" id="lights"></div>
             
             <div class="wheel-inner" id="wheel-inner">
-                <!-- 
-                   ITENS (6 Fatias x 60 graus) 
-                   Ordem igual ao array 'sectors' no JS
-                -->
-
-                <!-- 1. 500 MT (Vermelho) - 0deg -->
+                <!-- Fatia 1 (0-45) -->
                 <div class="prize-item" style="transform: rotate(0deg)">
                     <div class="prize-content">
                         <img src="500MZN.jpg" alt="500">
@@ -413,41 +334,57 @@
                     </div>
                 </div>
 
-                <!-- 2. 1000 MT (Prata) - 60deg -->
-                <div class="prize-item" style="transform: rotate(60deg)">
+                <!-- Fatia 2 (45-90) - Tente Outro Dia -->
+                <div class="prize-item" style="transform: rotate(45deg)">
                     <div class="prize-content">
+                        <div style="font-size: 30px; margin-bottom: 5px;"></div>
+                        Tente Outro Dia
+                    </div>
+                </div>
+
+                <!-- Fatia 3 (90-135) -->
+                <div class="prize-item" style="transform: rotate(90deg)">
+                    <div class="prize-content ">
                         <img src="1000MZN.jpg" alt="1000">
                         Voucher 1000MT
                     </div>
                 </div>
 
-                <!-- 3. 2000 MT (Dourado) - 120deg -->
-                <div class="prize-item" style="transform: rotate(120deg)">
-                    <div class="prize-content">
-                        <img src="1000MZN.jpg" alt="2000">
-                        Voucher 2000MT
-                    </div>
-                </div>
-
-                <!-- 4. Powerbank (Vermelho) - 180deg -->
-                <div class="prize-item" style="transform: rotate(180deg)">
+                <!-- Fatia 4 (135-180) -->
+                <div class="prize-item" style="transform: rotate(135deg)">
                     <div class="prize-content">
                         <img src="powerbank.png" alt="Power">
                         POWER<br>BANK
                     </div>
                 </div>
 
-                <!-- 5. Watch (Verde) - 240deg -->
-                <div class="prize-item" style="transform: rotate(240deg)">
+                <!-- Fatia 5 (180-225) - Tente Outro Dia -->
+                <div class="prize-item" style="transform: rotate(180deg)">
+                    <div class="prize-content">
+                        <div style="font-size: 30px; margin-bottom: 5px;"></div>
+                        Tente Outro Dia
+                    </div>
+                </div>
+
+                <!-- Fatia 6 (225-270) -->
+                <div class="prize-item" style="transform: rotate(225deg)">
+                    <div class="prize-content ">
+                        <img src="1000MZN.jpg" alt="2000">
+                        Voucher 2000MT
+                    </div>
+                </div>
+
+                <!-- Fatia 7 (270-315) -->
+                <div class="prize-item" style="transform: rotate(270deg)">
                     <div class="prize-content">
                         <img src="watch.png" alt="Watch">
                         SMART<br>WATCH
                     </div>
                 </div>
 
-                <!-- 6. Buds (Dourado) - 300deg -->
-                <div class="prize-item" style="transform: rotate(300deg)">
-                    <div class="prize-content">
+                <!-- Fatia 8 (315-360) -->
+                <div class="prize-item" style="transform: rotate(315deg)">
+                    <div class="prize-content ">
                         <img src="buds.png" alt="Buds">
                         INFINIX<br>BUDS
                     </div>
@@ -458,33 +395,28 @@
         </div>
 
         <button onclick="spinWheel()" id="btnSpin" class="btn-play">GIRAR 🎁</button>
-        <button id="btnExport" class="btn-export" onclick="exportData()">📥 Exportar Vencedores</button>
         
         <div class="legal-footer">© Infinix & Yango Christmas Campaign</div>
     </div>
 </div>
 
 <script>
-    // --- 1. INTEGRAÇÃO ---
     const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdt--iC4oRJdde0SUahq17Pi5gdxWv6ctqv-7ricHgZC9IjjdZstXTPQ86CcWRu0IW/exec"; 
 
-    // --- 2. CONFIGURAÇÃO LUZES (Novo código) ---
     const lightsContainer = document.getElementById('lights');
     const lightsCount = 20; 
-    const lightsRadius = 152; // Ajustado para o tamanho 320px
+    const lightsRadius = 152;
     for(let i=0; i<lightsCount; i++){
         const bulb = document.createElement('div');
         bulb.classList.add('light-bulb');
         const angle = (i / lightsCount) * (2 * Math.PI);
         const x = Math.cos(angle) * lightsRadius;
         const y = Math.sin(angle) * lightsRadius;
-        // CORREÇÃO: Adicionado translate(-50%, -50%) para centrar a lâmpada no ponto exato
         bulb.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
         bulb.style.animation = `blink 1s infinite ${i%2==0 ? '0s' : '0.5s'}`;
         lightsContainer.appendChild(bulb);
     }
 
-    // --- 3. SEGURANÇA ---
     const ALLOWED_CARS = ['carro_01', 'carro_02', 'carro_03'];
     let currentCarId = null;
 
@@ -508,7 +440,6 @@
     }
     let hasValidLink = checkAccess();
 
-    // --- 4. FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyDbvibPXx9rc8nyA4CKQNE5xAPevw4PnrE", 
         authDomain: "spin-the-wheel0.firebaseapp.com",
@@ -518,19 +449,18 @@
         appId: "1:490612802646:web:043a7f993206f0d745a7f7"
     };
 
-    // --- 5. STOCK & PRÉMIOS ---
     const INITIAL_STOCK = { mzn500: 50, mzn1000: 30, mzn2000: 20, powerbank: 15, smartwatch: 10, buds: 10 };
-    const ADMIN_B64 = "KzI1ODg2NTQ3NjMzMw=="; 
-    const MAX_SPINS = 1; // AGORA APENAS 1 JOGO POR DIA
+    const MAX_SPINS = 1;
 
-    // A ordem aqui DEVE corresponder à ordem dos DIVs no HTML
     const sectors = [
-        { label: "mzn500", text: "500 MT" },      // index 0
-        { label: "mzn1000", text: "1000 MT" },    // index 1
-        { label: "mzn2000", text: "2000 MT" },    // index 2
-        { label: "powerbank", text: "PowerBank" },// index 3
-        { label: "smartwatch", text: "Watch" },   // index 4
-        { label: "buds", text: "Buds" }           // index 5
+        { label: "mzn500", text: "500 MT" },
+        { label: "loss", text: "Tente Outro Dia" },
+        { label: "mzn1000", text: "1000 MT" },
+        { label: "powerbank", text: "PowerBank" },
+        { label: "loss", text: "Tente Outro Dia" },
+        { label: "mzn2000", text: "2000 MT" },
+        { label: "smartwatch", text: "Watch" },
+        { label: "buds", text: "Buds" }
     ];
 
     function createSnow() {
@@ -547,7 +477,7 @@
     }
     createSnow();
 
-    let isOffline = false; let isAdmin = false; let userData = {};
+    let isOffline = false; let userData = {};
     let db; let dailySpinsCount = 0;
 
     try { 
@@ -577,19 +507,7 @@
         if (cleanDigits.length !== 9) return showToast("Número inválido", "error");
         
         const finalPhone = "+258" + cleanDigits;
-        userData = { name, email, phone: finalPhone, car_id: currentCarId || 'admin_bypass' };
-        
-        if(btoa(finalPhone) === ADMIN_B64) {
-            isAdmin = true;
-            document.getElementById('admin-badge').style.display = 'inline-block';
-            document.getElementById('btnExport').style.display = 'block';
-            document.getElementById('stock-panel').style.display = 'grid'; 
-            document.getElementById('main-app').style.display = 'flex';
-            document.getElementById('access-denied').style.display = 'none';
-            updateStockDisplay();
-            goToWheel();
-            return;
-        }
+        userData = { name, email, phone: finalPhone, car_id: currentCarId };
 
         if(!hasValidLink && !currentCarId) { return; }
 
@@ -612,10 +530,8 @@
                 } else { dailySpinsCount = 0; }
             } else { dailySpinsCount = 0; }
             
-            updateStockDisplay(); 
             goToWheel();
         } catch (e) {
-            updateStockDisplay();
             goToWheel();
         }
     }
@@ -625,29 +541,13 @@
         document.getElementById('step-wheel').style.display = 'block';
     }
 
-    async function updateStockDisplay() {
-        try {
-            if (!db) { updateBadgesFromStock(INITIAL_STOCK); return; }
-            const stockDoc = await db.collection("config").doc("inventory").get();
-            let s = INITIAL_STOCK;
-            if (stockDoc.exists) { s = stockDoc.data(); }
-            updateBadgesFromStock(s);
-        } catch(e) { updateBadgesFromStock(INITIAL_STOCK); }
-    }
-
-    function updateBadgesFromStock(s) {
-        document.getElementById('s_500').innerHTML = `💵 500: <b>${s.mzn500}</b>`;
-        document.getElementById('s_1000').innerHTML = `💵 1000: <b>${s.mzn1000}</b>`;
-        document.getElementById('s_2000').innerHTML = `💵 2000: <b>${s.mzn2000}</b>`;
-        document.getElementById('s_pbank').innerHTML = `🔋 Power: <b>${s.powerbank}</b>`;
-        document.getElementById('s_watch').innerHTML = `⌚ Watch: <b>${s.smartwatch}</b>`;
-        document.getElementById('s_buds').innerHTML = `🎧 Buds: <b>${s.buds}</b>`;
-    }
-
-    // --- NOVA LÓGICA DE SPIN PARA HTML WHEEL ---
     let currentRotation = 0;
     
     function spinWheel() {
+        if(dailySpinsCount >= MAX_SPINS) {
+             return showToast("Já usaste a tua jogada de hoje!", "error");
+        }
+
         const btn = document.getElementById('btnSpin');
         btn.disabled = true; btn.innerText = "A GIRAR...";
 
@@ -655,25 +555,49 @@
         const r = Math.random() * 100;
         let key = "loss";
         
-        // Probabilidades (Ajustadas para testes)
-        if (r < 31) key = "mzn500";
-        else if (r < 51) key = "mzn1000";
-        else if (r < 69) key = "mzn2000";
-        else if (r < 79) key = "powerbank";
-        else if (r < 89) key = "smartwatch";
-        else if (r < 100) key = "buds";
+        if (r < 15) key = "mzn500";
+        else if (r < 45) key = "loss"; 
+        else if (r < 55) key = "mzn1000";
+        else if (r < 65) key = "powerbank";
+        else if (r < 95) key = "loss"; 
+        else if (r < 98) key = "mzn2000";
+        else if (r < 99) key = "smartwatch";
+        else key = "buds";
         
-        // Encontrar índice do prémio no array sectors
         const indices = [];
         sectors.forEach((s, i) => { if(s.label === key) indices.push(i); });
-        const winnerIndex = indices.length > 0 ? indices[0] : 0;
-        const sliceDeg = 360 / sectors.length; 
+        
+        let winnerIndex = 0;
+        if(key === "loss" && indices.length > 1) {
+            winnerIndex = indices[Math.floor(Math.random() * indices.length)];
+        } else if (indices.length > 0) {
+            winnerIndex = indices[0];
+        }
+
+        const sliceDeg = 360 / sectors.length;
+        // Ensure minimum 5 spins
         const extraSpins = 5 * 360; 
-        const stopAngle = winnerIndex * sliceDeg;
-        currentRotation += extraSpins + stopAngle;
+        
+        // Calculate the rotation angle needed to land on the winnerIndex
+        // The wheel spins counter-clockwise visually in the CSS (rotate(-...deg))
+        // So we target a negative angle.
+        // Index 0 is at 0 deg. Index 1 is at 45 deg.
+        // To show index 1 at top, we rotate -45 deg.
+        const targetAngle = winnerIndex * sliceDeg;
+        
+        // Calculate current accumulated rotation (absolute) modulo 360
+        const currentMod = currentRotation % 360;
+        
+        // Calculate how much more we need to rotate to align correctly
+        let needed = targetAngle - currentMod;
+        if (needed < 0) needed += 360;
+        
+        // Add extra spins plus the alignment
+        currentRotation += extraSpins + needed;
+        
         const wheelEl = document.getElementById('wheel-inner');
-        const finalTarget = (5 * 360) + (winnerIndex * 60);
-        wheelEl.style.transform = `rotate(-${finalTarget}deg)`;
+        wheelEl.style.transform = `rotate(-${currentRotation}deg)`;
+
         setTimeout(() => endSpin(key, sectors[winnerIndex].text), 4000);
     }
 
@@ -695,26 +619,40 @@
                     [key]: firebase.firestore.FieldValue.increment(-1)
                 });
                 
-                if(SHEET_WEBHOOK_URL) fetch(SHEET_WEBHOOK_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(data)});
+                if(SHEET_WEBHOOK_URL) {
+                    console.log("Enviando dados para o Sheets...");
+                    fetch(SHEET_WEBHOOK_URL, {
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(data)
+                    }).then(() => console.log("Dados enviados (no-cors)"))
+                      .catch(e => console.error("Erro envio Sheets", e));
+                }
             }
         }
 
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        dailySpinsCount++; 
+
+        if(key !== "loss") {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            document.getElementById('winner-msg').innerText = "Parabéns! O seu prémio foi confirmado.";
+        } else {
+            document.getElementById('winner-msg').innerText = "Não foi desta vez. Tente novamente amanhã!";
+        }
         
         document.getElementById('winner-prize').innerText = label;
         document.getElementById('winner-modal').style.display = 'flex';
         
         setTimeout(() => {
-            document.getElementById('btnSpin').disabled = false;
-            document.getElementById('btnSpin').innerText = "GIRAR NOVAMENTE";
-            // Reset wheel visualmente (opcional, pode ser estranho se o utilizador ver)
-            document.getElementById('wheel-inner').style.transition = "none";
-            document.getElementById('wheel-inner').style.transform = "rotate(0deg)";
-            // Força reflow
-            void document.getElementById('wheel-inner').offsetWidth;
-            document.getElementById('wheel-inner').style.transition = "transform 4s cubic-bezier(0.15, 0.9, 0.3, 1)";
-            
-            if(isAdmin) updateStockDisplay();
+            if(dailySpinsCount < MAX_SPINS) {
+                document.getElementById('btnSpin').disabled = false;
+                document.getElementById('btnSpin').innerText = "GIRAR NOVAMENTE";
+            } else {
+                document.getElementById('btnSpin').disabled = true;
+                document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
+            }
+            // Reset Removed
         }, 3000);
     }
     
