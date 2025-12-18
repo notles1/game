@@ -156,16 +156,15 @@
             border: 4px solid #fff; box-sizing: border-box;
             transition: transform 4s cubic-bezier(0.15, 0.9, 0.3, 1);
             
-            /* TUA ALTERAÇÃO: Cores Pretas/Cinza para 'Loss' */
             background: 
                 radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.2) 30%),
                 conic-gradient(
                 from -22.5deg,
                 #ff0000 0deg, #8b0000 45deg,    /* 500 MT */
-                #131313 45deg, #000000 90deg,   /* Tente Outro Dia (Preto) */
+                #131313 45deg, #000000 90deg,   /* Tente Outro Dia */
                 #ffffff 90deg, #b0bec5 135deg,  /* 1000 MT */
                 #ff0000 135deg, #8b0000 180deg, /* Powerbank */
-                #131313 180deg, #030303 225deg, /* Tente Outro Dia (Preto) */
+                #131313 180deg, #030303 225deg, /* Tente Outro Dia */
                 #ffd700 225deg, #ff8f00 270deg, /* 2000 MT */
                 #00ff00 270deg, #006400 315deg, /* Watch */
                 #ffd700 315deg, #ff8f00 360deg  /* Buds */
@@ -335,7 +334,7 @@
                     </div>
                 </div>
 
-                <!-- Fatia 2 (45-90) - Tente Outro Dia - TUA ALTERAÇÃO (SEM EMOJI) -->
+                <!-- Fatia 2 (45-90) - Tente Outro Dia -->
                 <div class="prize-item" style="transform: rotate(45deg)">
                     <div class="prize-content">
                         <div style="font-size: 30px; margin-bottom: 5px;"></div>
@@ -359,7 +358,7 @@
                     </div>
                 </div>
 
-                <!-- Fatia 5 (180-225) - Tente Outro Dia - TUA ALTERAÇÃO (SEM EMOJI) -->
+                <!-- Fatia 5 (180-225) - Tente Outro Dia -->
                 <div class="prize-item" style="transform: rotate(180deg)">
                     <div class="prize-content">
                         <div style="font-size: 30px; margin-bottom: 5px;"></div>
@@ -450,7 +449,6 @@
         appId: "1:490612802646:web:043a7f993206f0d745a7f7"
     };
 
-    // TUA ALTERAÇÃO: Stock atualizado
     const INITIAL_STOCK = { mzn500: 100, mzn1000: 50, mzn2000:30, powerbank: 10, smartwatch: 10, buds: 10 };
     const MAX_SPINS = 1;
 
@@ -544,10 +542,9 @@
     }
 
     let currentRotation = 0;
-    let isSpinning = false; // MANTER ESTA VARIÁVEL PARA O BLOQUEIO
+    let isSpinning = false;
 
     function spinWheel() {
-        // --- 1. BLOQUEIO IMEDIATO ---
         if (isSpinning) return;
         const btn = document.getElementById('btnSpin');
         btn.disabled = true; 
@@ -599,7 +596,6 @@
     }
 
     async function endSpin(key, label) {
-        // --- 2. TRANSAÇÃO SEGURA CONTRA DUPLICAÇÃO ---
         if(db) {
             const today = new Date().toISOString().split('T')[0];
             const userRef = db.collection("participants").doc(userData.phone);
@@ -670,16 +666,27 @@
         if(key !== "loss") {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             
-            // MANTER INFORMAÇÃO DOS VOUCHERS
+            // LOGICA DE MENSAGENS DE LEVANTAMENTO
             if (key === "mzn500" || key === "mzn1000" || key === "mzn2000") {
+                // Mensagem para Vouchers (2 Lojas)
                 document.getElementById('winner-msg').innerHTML = `
                     Parabéns! O seu prémio foi confirmado.<br><br>
-                    <small style="display:block; text-align:left; margin-top:10px; font-size:11px; line-height:1.4;">
+                    <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
                     <b>Pode levantar nas seguintes lojas:</b><br><br>
                     1. <b>Abdul Hafeez Comercial</b><br>
                     Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22 - Smartphones e Xpad<br><br>
                     2. <b>The Brand Shop</b><br>
                     Av.Guerra Popular, n° 1093, R/c, Loja 4 e 5 - TV Infinix
+                    </small>
+                `;
+            } else if (key === "buds" || key === "smartwatch" || key === "powerbank") {
+                // Mensagem para Prémios Físicos (Apenas Abdul Hafeez)
+                document.getElementById('winner-msg').innerHTML = `
+                    Parabéns! O seu prémio foi confirmado.<br><br>
+                    <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
+                    <b>Pode levantar na seguinte loja:</b><br><br>
+                    <b>Abdul Hafeez Comercial</b><br>
+                    Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22 - Smartphones e Xpad
                     </small>
                 `;
             } else {
