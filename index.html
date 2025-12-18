@@ -156,18 +156,19 @@
             border: 4px solid #fff; box-sizing: border-box;
             transition: transform 4s cubic-bezier(0.15, 0.9, 0.3, 1);
             
+            /* TUA ALTERAÇÃO: Cores Pretas/Cinza para 'Loss' */
             background: 
                 radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.2) 30%),
                 conic-gradient(
                 from -22.5deg,
-                #ff0000 0deg, #8b0000 45deg,   /* 500 MT */
-                #131313 45deg, #000000 90deg,  /* Tente Outro Dia */
-                #ffffff 90deg, #b0bec5 135deg, /* 1000 MT */
-                #ff0000 135deg, #8b0000 180deg,/* Powerbank */
-                #131313 180deg, #030303 225deg,/* Tente Outro Dia */
-                #ffd700 225deg, #ff8f00 270deg,/* 2000 MT */
-                #00ff00 270deg, #006400 315deg,/* Watch */
-                #ffd700 315deg, #ff8f00 360deg /* Buds */
+                #ff0000 0deg, #8b0000 45deg,    /* 500 MT */
+                #131313 45deg, #000000 90deg,   /* Tente Outro Dia (Preto) */
+                #ffffff 90deg, #b0bec5 135deg,  /* 1000 MT */
+                #ff0000 135deg, #8b0000 180deg, /* Powerbank */
+                #131313 180deg, #030303 225deg, /* Tente Outro Dia (Preto) */
+                #ffd700 225deg, #ff8f00 270deg, /* 2000 MT */
+                #00ff00 270deg, #006400 315deg, /* Watch */
+                #ffd700 315deg, #ff8f00 360deg  /* Buds */
             );
         }
 
@@ -334,7 +335,7 @@
                     </div>
                 </div>
 
-                <!-- Fatia 2 (45-90) - Tente Outro Dia -->
+                <!-- Fatia 2 (45-90) - Tente Outro Dia - TUA ALTERAÇÃO (SEM EMOJI) -->
                 <div class="prize-item" style="transform: rotate(45deg)">
                     <div class="prize-content">
                         <div style="font-size: 30px; margin-bottom: 5px;"></div>
@@ -358,7 +359,7 @@
                     </div>
                 </div>
 
-                <!-- Fatia 5 (180-225) - Tente Outro Dia -->
+                <!-- Fatia 5 (180-225) - Tente Outro Dia - TUA ALTERAÇÃO (SEM EMOJI) -->
                 <div class="prize-item" style="transform: rotate(180deg)">
                     <div class="prize-content">
                         <div style="font-size: 30px; margin-bottom: 5px;"></div>
@@ -449,16 +450,17 @@
         appId: "1:490612802646:web:043a7f993206f0d745a7f7"
     };
 
+    // TUA ALTERAÇÃO: Stock atualizado
     const INITIAL_STOCK = { mzn500: 100, mzn1000: 50, mzn2000:30, powerbank: 10, smartwatch: 10, buds: 10 };
     const MAX_SPINS = 1;
 
     const sectors = [
-        { label: "mzn500", text: "500 MT" },
+        { label: "mzn500", text: "Voucher 500 MT" },
         { label: "loss", text: "Tente Outro Dia" },
-        { label: "mzn1000", text: "1000 MT" },
+        { label: "mzn1000", text: "Voucher 1000 MT" },
         { label: "powerbank", text: "PowerBank" },
         { label: "loss", text: "Tente Outro Dia" },
-        { label: "mzn2000", text: "2000 MT" },
+        { label: "mzn2000", text: "Voucher 2000 MT" },
         { label: "smartwatch", text: "Watch" },
         { label: "buds", text: "Buds" }
     ];
@@ -542,14 +544,20 @@
     }
 
     let currentRotation = 0;
-    
+    let isSpinning = false; // MANTER ESTA VARIÁVEL PARA O BLOQUEIO
+
     function spinWheel() {
+        // --- 1. BLOQUEIO IMEDIATO ---
+        if (isSpinning) return;
+        const btn = document.getElementById('btnSpin');
+        btn.disabled = true; 
+        btn.innerText = "A GIRAR...";
+        isSpinning = true;
+
         if(dailySpinsCount >= MAX_SPINS) {
+             isSpinning = false;
              return showToast("Já usaste a tua jogada de hoje!", "error");
         }
-
-        const btn = document.getElementById('btnSpin');
-        btn.disabled = true; btn.innerText = "A GIRAR...";
 
         let stock = { ...INITIAL_STOCK };
         const r = Math.random() * 100;
@@ -575,24 +583,13 @@
         }
 
         const sliceDeg = 360 / sectors.length;
-        // Ensure minimum 5 spins
         const extraSpins = 5 * 360; 
         
-        // Calculate the rotation angle needed to land on the winnerIndex
-        // The wheel spins counter-clockwise visually in the CSS (rotate(-...deg))
-        // So we target a negative angle.
-        // Index 0 is at 0 deg. Index 1 is at 45 deg.
-        // To show index 1 at top, we rotate -45 deg.
         const targetAngle = winnerIndex * sliceDeg;
-        
-        // Calculate current accumulated rotation (absolute) modulo 360
         const currentMod = currentRotation % 360;
-        
-        // Calculate how much more we need to rotate to align correctly
         let needed = targetAngle - currentMod;
         if (needed < 0) needed += 360;
         
-        // Add extra spins plus the alignment
         currentRotation += extraSpins + needed;
         
         const wheelEl = document.getElementById('wheel-inner');
@@ -602,41 +599,92 @@
     }
 
     async function endSpin(key, label) {
+        // --- 2. TRANSAÇÃO SEGURA CONTRA DUPLICAÇÃO ---
         if(db) {
             const today = new Date().toISOString().split('T')[0];
-            const data = {
-                ...userData,
-                last_spin_date: today,
-                daily_spins: firebase.firestore.FieldValue.increment(1),
-                prize: label
-            };
-            
-            db.collection("participants").doc(userData.phone).set(data, {merge:true});
-            
-            if(key !== "loss") {
-                db.collection("winners").add({ ...data, win_at: new Date() });
-                db.collection("config").doc("inventory").update({
-                    [key]: firebase.firestore.FieldValue.increment(-1)
+            const userRef = db.collection("participants").doc(userData.phone);
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    let currentSpins = 0;
+                    
+                    if (userDoc.exists) {
+                        const data = userDoc.data();
+                        if (data.last_spin_date === today) {
+                            currentSpins = data.daily_spins || 0;
+                        }
+                    }
+
+                    if (currentSpins >= MAX_SPINS) {
+                        throw "Limite atingido";
+                    }
+
+                    const newData = {
+                        ...userData,
+                        last_spin_date: today,
+                        daily_spins: currentSpins + 1,
+                        prize: label
+                    };
+
+                    transaction.set(userRef, newData, { merge: true });
+                    
+                    if(key !== "loss") {
+                        const winRef = db.collection("winners").doc(); // Auto-ID
+                        transaction.set(winRef, { ...newData, win_at: new Date() });
+                        
+                        const stockRef = db.collection("config").doc("inventory");
+                        transaction.update(stockRef, { [key]: firebase.firestore.FieldValue.increment(-1) });
+                    }
                 });
-                
-                if(SHEET_WEBHOOK_URL) {
-                    console.log("Enviando dados para o Sheets...");
+
+                // Só envia para o Sheets se a transação passar (não duplicado)
+                if(key !== "loss" && SHEET_WEBHOOK_URL) {
                     fetch(SHEET_WEBHOOK_URL, {
                         method: 'POST', 
                         mode: 'no-cors', 
                         headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(data)
-                    }).then(() => console.log("Dados enviados (no-cors)"))
-                      .catch(e => console.error("Erro envio Sheets", e));
+                        body: JSON.stringify({
+                            ...userData,
+                            last_spin_date: today,
+                            daily_spins: 1, // Confirmado pela transação
+                            prize: label
+                        })
+                    }).catch(e => console.error(e));
                 }
-            }
-        }
 
-        dailySpinsCount++; 
+                dailySpinsCount++; 
+
+            } catch (e) {
+                console.log("Transação falhou ou limite atingido:", e);
+                // Se falhou (já jogou), não mostra prémio
+                isSpinning = false;
+                document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
+                return; 
+            }
+        } else {
+            // Fallback offline (apenas teste)
+            dailySpinsCount++;
+        }
 
         if(key !== "loss") {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            document.getElementById('winner-msg').innerText = "Parabéns! O seu prémio foi confirmado.";
+            
+            // MANTER INFORMAÇÃO DOS VOUCHERS
+            if (key === "mzn500" || key === "mzn1000" || key === "mzn2000") {
+                document.getElementById('winner-msg').innerHTML = `
+                    Parabéns! O seu prémio foi confirmado.<br><br>
+                    <small style="display:block; text-align:left; margin-top:10px; font-size:11px; line-height:1.4;">
+                    <b>Pode levantar nas seguintes lojas:</b><br><br>
+                    1. <b>Abdul Hafeez Comercial</b><br>
+                    Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22 - Smartphones e Xpad<br><br>
+                    2. <b>The Brand Shop</b><br>
+                    Av.Guerra Popular, n° 1093, R/c, Loja 4 e 5 - TV Infinix
+                    </small>
+                `;
+            } else {
+                document.getElementById('winner-msg').innerText = "Parabéns! O seu prémio foi confirmado. Por favor, aguarde uma chamada da nossa equipa.";
+            }
         } else {
             document.getElementById('winner-msg').innerText = "Não foi desta vez. Tente novamente amanhã!";
         }
@@ -645,6 +693,8 @@
         document.getElementById('winner-modal').style.display = 'flex';
         
         setTimeout(() => {
+            isSpinning = false;
+            // Se já jogou 1 vez (MAX_SPINS=1), bloqueia sempre
             if(dailySpinsCount < MAX_SPINS) {
                 document.getElementById('btnSpin').disabled = false;
                 document.getElementById('btnSpin').innerText = "GIRAR NOVAMENTE";
@@ -652,7 +702,6 @@
                 document.getElementById('btnSpin').disabled = true;
                 document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
             }
-            // Reset Removed
         }, 3000);
     }
     
