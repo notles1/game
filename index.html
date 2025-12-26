@@ -544,11 +544,13 @@
     let currentRotation = 0;
     let isSpinning = false;
 
-    function spinWheel() {
+    // --- FUNÇÃO SPIN WHEEL CORRIGIDA ---
+    async function spinWheel() {
         if (isSpinning) return;
+        
         const btn = document.getElementById('btnSpin');
         btn.disabled = true; 
-        btn.innerText = "A GIRAR...";
+        btn.innerText = "A VERIFICAR..."; // Feedback visual
         isSpinning = true;
 
         if(dailySpinsCount >= MAX_SPINS) {
@@ -556,55 +558,90 @@
              return showToast("Já usaste a tua jogada de hoje!", "error");
         }
 
-        let stock = { ...INITIAL_STOCK };
-        const r = Math.random() * 100;
-        let key = "loss";
-        
-        if (r < 15) key = "mzn500";
-        else if (r < 45) key = "loss"; 
-        else if (r < 55) key = "mzn1000";
-        else if (r < 65) key = "powerbank";
-        else if (r < 95) key = "loss"; 
-        else if (r < 98) key = "mzn2000";
-        else if (r < 99) key = "smartwatch";
-        else key = "buds";
-        
-        const indices = [];
-        sectors.forEach((s, i) => { if(s.label === key) indices.push(i); });
-        
-        let winnerIndex = 0;
-        if(key === "loss" && indices.length > 1) {
-            winnerIndex = indices[Math.floor(Math.random() * indices.length)];
-        } else if (indices.length > 0) {
-            winnerIndex = indices[0];
+        try {
+            // 1. Ler o stock REAL da base de dados antes de sortear
+            let realStock = { ...INITIAL_STOCK };
+            try {
+                const stockRef = db.collection("config").doc("inventory");
+                const stockSnap = await stockRef.get();
+                if(stockSnap.exists) realStock = stockSnap.data();
+            } catch(e) {
+                console.log("Erro ao ler stock (offline?), usando inicial");
+            }
+
+            // 2. Lógica de Sorteio
+            const r = Math.random() * 100;
+            let key = "loss";
+            
+            if (r < 15) key = "mzn500";
+            else if (r < 45) key = "loss"; 
+            else if (r < 55) key = "mzn1000";
+            else if (r < 65) key = "powerbank";
+            else if (r < 95) key = "loss"; 
+            else if (r < 98) key = "mzn2000";
+            else if (r < 99) key = "smartwatch";
+            else key = "buds";
+            
+            // 3. VERIFICAÇÃO DE SEGURANÇA: Se o prémio sorteado não tem stock, muda para LOSS
+            // Isso previne que a roda pare num prémio que já acabou
+            if (key !== "loss" && (realStock[key] === undefined || realStock[key] <= 0)) {
+                console.log(`Stock esgotado para ${key}, mudando para loss.`);
+                key = "loss";
+            }
+
+            // 4. Calcular o ângulo da roda
+            const indices = [];
+            sectors.forEach((s, i) => { if(s.label === key) indices.push(i); });
+            
+            let winnerIndex = 0;
+            if(key === "loss" && indices.length > 1) {
+                winnerIndex = indices[Math.floor(Math.random() * indices.length)];
+            } else if (indices.length > 0) {
+                winnerIndex = indices[0];
+            }
+
+            btn.innerText = "A GIRAR...";
+            
+            const sliceDeg = 360 / sectors.length;
+            const extraSpins = 5 * 360; 
+            
+            const targetAngle = winnerIndex * sliceDeg;
+            const currentMod = currentRotation % 360;
+            let needed = targetAngle - currentMod;
+            if (needed < 0) needed += 360;
+            
+            currentRotation += extraSpins + needed;
+            
+            const wheelEl = document.getElementById('wheel-inner');
+            wheelEl.style.transform = `rotate(-${currentRotation}deg)`;
+
+            // Passamos o 'key' e o 'label' para a função final
+            setTimeout(() => endSpin(key, sectors[winnerIndex].text), 4000);
+
+        } catch (error) {
+            console.error("Erro geral:", error);
+            isSpinning = false;
+            btn.disabled = false;
+            btn.innerText = "ERRO - TENTE NOVAMENTE";
+            showToast("Erro de conexão. Tente novamente.", "error");
         }
-
-        const sliceDeg = 360 / sectors.length;
-        const extraSpins = 5 * 360; 
-        
-        const targetAngle = winnerIndex * sliceDeg;
-        const currentMod = currentRotation % 360;
-        let needed = targetAngle - currentMod;
-        if (needed < 0) needed += 360;
-        
-        currentRotation += extraSpins + needed;
-        
-        const wheelEl = document.getElementById('wheel-inner');
-        wheelEl.style.transform = `rotate(-${currentRotation}deg)`;
-
-        setTimeout(() => endSpin(key, sectors[winnerIndex].text), 4000);
     }
 
+    // --- FUNÇÃO END SPIN CORRIGIDA ---
     async function endSpin(key, label) {
         if(db) {
             const today = new Date().toISOString().split('T')[0];
             const userRef = db.collection("participants").doc(userData.phone);
+            const stockRef = db.collection("config").doc("inventory");
 
             try {
+                let finalKey = key;
+                let finalLabel = label;
+
                 await db.runTransaction(async (transaction) => {
+                    // A. Verificar se o utilizador já jogou
                     const userDoc = await transaction.get(userRef);
                     let currentSpins = 0;
-                    
                     if (userDoc.exists) {
                         const data = userDoc.data();
                         if (data.last_spin_date === today) {
@@ -616,26 +653,43 @@
                         throw "Limite atingido";
                     }
 
+                    // B. VERIFICAÇÃO FINAL DE STOCK (A parte mais importante)
+                    if (finalKey !== "loss") {
+                        const stockDoc = await transaction.get(stockRef);
+                        const currentQty = stockDoc.data()[finalKey] || 0;
+
+                        if (currentQty <= 0) {
+                            // Se chegou aqui e o stock acabou no último milissegundo:
+                            finalKey = "loss";
+                            finalLabel = "Tente Outro Dia";
+                            // Não descontamos stock, transformamos a vitória em derrota
+                        } else {
+                            // Se tem stock, descontamos 1
+                            transaction.update(stockRef, { [finalKey]: firebase.firestore.FieldValue.increment(-1) });
+                        }
+                    }
+
+                    // C. Gravar dados do utilizador
                     const newData = {
                         ...userData,
                         last_spin_date: today,
                         daily_spins: currentSpins + 1,
-                        prize: label
+                        prize: finalLabel // Usamos o label final
                     };
 
                     transaction.set(userRef, newData, { merge: true });
                     
-                    if(key !== "loss") {
-                        const winRef = db.collection("winners").doc(); // Auto-ID
+                    // D. Se realmente ganhou (e tinha stock), gravar na lista de vencedores
+                    if(finalKey !== "loss") {
+                        const winRef = db.collection("winners").doc();
                         transaction.set(winRef, { ...newData, win_at: new Date() });
-                        
-                        const stockRef = db.collection("config").doc("inventory");
-                        transaction.update(stockRef, { [key]: firebase.firestore.FieldValue.increment(-1) });
                     }
                 });
 
-                // Só envia para o Sheets se a transação passar (não duplicado)
-                if(key !== "loss" && SHEET_WEBHOOK_URL) {
+                // --- UI e Webhook (Sucesso) ---
+                
+                // Só envia para o Sheets se a transação passar
+                if(finalKey !== "loss" && SHEET_WEBHOOK_URL) {
                     fetch(SHEET_WEBHOOK_URL, {
                         method: 'POST', 
                         mode: 'no-cors', 
@@ -643,17 +697,62 @@
                         body: JSON.stringify({
                             ...userData,
                             last_spin_date: today,
-                            daily_spins: 1, // Confirmado pela transação
-                            prize: label
+                            daily_spins: 1,
+                            prize: finalLabel
                         })
                     }).catch(e => console.error(e));
                 }
 
                 dailySpinsCount++; 
 
+                // Atualizar visual (Confetti e Modal)
+                if(finalKey !== "loss") {
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    
+                    if (finalKey === "mzn500" || finalKey === "mzn1000" || finalKey === "mzn2000") {
+                        document.getElementById('winner-msg').innerHTML = `
+                            Parabéns! O seu prémio foi confirmado.<br><br>
+                            <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
+                            <b>Pode levantar nas seguintes lojas:</b><br><br>
+                            1. <b>Abdul Hafeez Comercial</b><br>
+                            Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22 - Smartphones e Xpad<br><br>
+                            2. <b>The Brand Shop</b><br>
+                            Av.Guerra Popular, n° 1093, R/c, Loja 4 e 5 - TV Infinix
+                            </small>
+                        `;
+                    } else if (finalKey === "buds" || finalKey === "smartwatch" || finalKey === "powerbank") {
+                        document.getElementById('winner-msg').innerHTML = `
+                            Parabéns! O seu prémio foi confirmado.<br><br>
+                            <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
+                            <b>Pode levantar na seguinte loja:</b><br><br>
+                            <b>Abdul Hafeez Comercial</b><br>
+                            Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22
+                            </small>
+                        `;
+                    } else {
+                        document.getElementById('winner-msg').innerText = "Parabéns! O seu prémio foi confirmado.";
+                    }
+                } else {
+                    // Se era vitória mas virou derrota por falta de stock
+                    if (key !== finalKey) {
+                        document.getElementById('winner-msg').innerText = "Ups! O stock deste prémio acabou neste exato momento. Tente amanhã!";
+                    } else {
+                        document.getElementById('winner-msg').innerText = "Não foi desta vez. Tente novamente amanhã!";
+                    }
+                }
+                
+                document.getElementById('winner-prize').innerText = finalLabel;
+                document.getElementById('winner-modal').style.display = 'flex';
+                
+                // Reset botão
+                setTimeout(() => {
+                    isSpinning = false;
+                    document.getElementById('btnSpin').disabled = true;
+                    document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
+                }, 3000);
+
             } catch (e) {
                 console.log("Transação falhou ou limite atingido:", e);
-                // Se falhou (já jogou), não mostra prémio
                 isSpinning = false;
                 document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
                 return; 
@@ -661,55 +760,8 @@
         } else {
             // Fallback offline (apenas teste)
             dailySpinsCount++;
-        }
-
-        if(key !== "loss") {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            
-            // LOGICA DE MENSAGENS DE LEVANTAMENTO
-            if (key === "mzn500" || key === "mzn1000" || key === "mzn2000") {
-                // Mensagem para Vouchers (2 Lojas)
-                document.getElementById('winner-msg').innerHTML = `
-                    Parabéns! O seu prémio foi confirmado.<br><br>
-                    <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
-                    <b>Pode levantar nas seguintes lojas:</b><br><br>
-                    1. <b>Abdul Hafeez Comercial</b><br>
-                    Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22 - Smartphones e Xpad<br><br>
-                    2. <b>The Brand Shop</b><br>
-                    Av.Guerra Popular, n° 1093, R/c, Loja 4 e 5 - TV Infinix
-                    </small>
-                `;
-            } else if (key === "buds" || key === "smartwatch" || key === "powerbank") {
-                // Mensagem para Prémios Físicos (Apenas Abdul Hafeez)
-                document.getElementById('winner-msg').innerHTML = `
-                    Parabéns! O seu prémio foi confirmado.<br><br>
-                    <small style="display:block; text-align:left; margin-top:10px; font-size:13px; line-height:1.4;">
-                    <b>Pode levantar na seguinte loja:</b><br><br>
-                    <b>Abdul Hafeez Comercial</b><br>
-                    Av.Guerra Popular cruzamento com Av.25 de Setembro, loja n°22
-                    </small>
-                `;
-            } else {
-                document.getElementById('winner-msg').innerText = "Parabéns! O seu prémio foi confirmado. Por favor, aguarde uma chamada da nossa equipa.";
-            }
-        } else {
-            document.getElementById('winner-msg').innerText = "Não foi desta vez. Tente novamente amanhã!";
-        }
-        
-        document.getElementById('winner-prize').innerText = label;
-        document.getElementById('winner-modal').style.display = 'flex';
-        
-        setTimeout(() => {
             isSpinning = false;
-            // Se já jogou 1 vez (MAX_SPINS=1), bloqueia sempre
-            if(dailySpinsCount < MAX_SPINS) {
-                document.getElementById('btnSpin').disabled = false;
-                document.getElementById('btnSpin').innerText = "GIRAR NOVAMENTE";
-            } else {
-                document.getElementById('btnSpin').disabled = true;
-                document.getElementById('btnSpin').innerText = "VOLTA AMANHÃ";
-            }
-        }, 3000);
+        }
     }
     
     function closeWinnerModal() {
