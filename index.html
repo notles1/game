@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TechVault - Sistema integrado de gestão de retalho para o setor tecnológico">
+    <title>TechVault | Sistema de Gestão Integrado</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🏪</div>
+                    <div class="logo-text">
+                        <h1>TechVault</h1>
+                        <span>ERP System</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Principal</span>
+                    <div class="nav-item active" data-view="dashboard">
+                        <span class="icon">📊</span>
+                        <span>Dashboard</span>
+                    </div>
+                    <div class="nav-item" data-view="inventory">
+                        <span class="icon">📦</span>
+                        <span>Inventário</span>
+                        <span class="nav-badge" id="lowStockBadge">3</span>
+                    </div>
+                    <div class="nav-item" data-view="orders">
+                        <span class="icon">🛒</span>
+                        <span>Pedidos</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">E-commerce</span>
+                    <div class="nav-item" data-view="storefront">
+                        <span class="icon">🛍️</span>
+                        <span>Loja Online</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Sistema</span>
+                    <div class="nav-item" data-view="sync">
+                        <span class="icon">🔄</span>
+                        <span>Sincronização</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sync-status">
+                    <div class="sync-indicator"></div>
+                    <span>Sistema Sincronizado</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="view active">
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>Dashboard</h2>
+                        <p>Visão geral do seu negócio em tempo real</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="refreshData()">
+                            <span>🔄</span> Atualizar
+                        </button>
+                    </div>
+                </header>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">💰</div>
+                        <div class="kpi-value" id="kpi-revenue">€24,580</div>
+                        <div class="kpi-label">Receita Hoje</div>
+                        <div class="kpi-trend up">
+                            <span>↑</span> +12.5% vs ontem
+                        </div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">📦</div>
+                        <div class="kpi-value" id="kpi-orders">47</div>
+                        <div class="kpi-label">Pedidos Hoje</div>
+                        <div class="kpi-trend up">
+                            <span>↑</span> +8 novos
+                        </div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">🏷️</div>
+                        <div class="kpi-value" id="kpi-products">186</div>
+                        <div class="kpi-label">Produtos em Stock</div>
+                        <div class="kpi-trend down">
+                            <span>↓</span> 3 em baixo stock
+                        </div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">⚡</div>
+                        <div class="kpi-value" id="kpi-sync">99.9%</div>
+                        <div class="kpi-label">Taxa de Sincronização</div>
+                        <div class="kpi-trend up">
+                            <span>✓</span> Operacional
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Activity -->
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">📈 Vendas da Semana</h3>
+                        </div>
+                        <canvas id="salesChart" height="250"></canvas>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">🔔 Atividade Recente</h3>
+                        </div>
+                        <div class="activity-feed" id="activityFeed">
+                            <!-- Activity items generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory View -->
+            <section id="inventory-view" class="view">
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>Inventário</h2>
+                        <p>Gestão de produtos e stock</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-bar">
+                            <span>🔍</span>
+                            <input type="text" placeholder="Pesquisar produtos..." id="inventorySearch">
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddProductModal()">
+                            <span>+</span> Novo Produto
+                        </button>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table id="inventoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>SKU</th>
+                                    <th>Categoria</th>
+                                    <th>Preço</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders View -->
+            <section id="orders-view" class="view">
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>Pedidos</h2>
+                        <p>Gestão de encomendas e expedição</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="view-tabs">
+                            <button class="view-tab active" data-filter="all">Todos</button>
+                            <button class="view-tab" data-filter="pending">Pendentes</button>
+                            <button class="view-tab" data-filter="processing">Processando</button>
+                            <button class="view-tab" data-filter="shipped">Enviados</button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Produtos</th>
+                                    <th>Total</th>
+                                    <th>Data</th>
+                                    <th>Estado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Storefront View -->
+            <section id="storefront-view" class="view">
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>🛍️ Loja TechVault</h2>
+                        <p>Simulação de compra pelo cliente</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="toggleCart()">
+                            <span>🛒</span> Carrinho (<span id="cartCount">0</span>)
+                        </button>
+                    </div>
+                </header>
+
+                <div class="product-grid" id="storefrontProducts">
+                    <!-- Generated by JS -->
+                </div>
+            </section>
+
+            <!-- Sync Demo View -->
+            <section id="sync-view" class="view">
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>Demonstração de Sincronização</h2>
+                        <p>Veja como o TechVault sincroniza E-commerce com Armazém em tempo real</p>
+                    </div>
+                </header>
+
+                <div class="content-grid-equal">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">🛍️ E-commerce (Front-end)</h3>
+                        </div>
+                        <div style="text-align: center; padding: 40px 0;">
+                            <div style="font-size: 64px; margin-bottom: 20px;">🛒</div>
+                            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                                Quando um cliente faz uma compra na loja online...
+                            </p>
+                            <button class="btn btn-primary" onclick="simulatePurchase()">
+                                Simular Compra Agora
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">📦 Armazém (Back-end)</h3>
+                        </div>
+                        <div style="text-align: center; padding: 40px 0;">
+                            <div style="font-size: 64px; margin-bottom: 20px;">🏭</div>
+                            <p style="color: var(--text-secondary);">
+                                ...o stock é automaticamente atualizado no armazém
+                            </p>
+                            <div id="syncLog"
+                                style="margin-top: 20px; text-align: left; max-height: 200px; overflow-y: auto;">
+                                <!-- Sync logs appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h3 class="card-title">⚙️ Como funciona o TechVault</h3>
+                    </div>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; padding: 20px 0;">
+                        <div>
+                            <div style="font-size: 40px; margin-bottom: 12px;">1️⃣</div>
+                            <h4 style="margin-bottom: 8px;">Cliente Compra</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Pedido recebido no E-commerce</p>
+                        </div>
+                        <div>
+                            <div style="font-size: 40px; margin-bottom: 12px;">2️⃣</div>
+                            <h4 style="margin-bottom: 8px;">Stock Verificado</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Sistema valida disponibilidade</p>
+                        </div>
+                        <div>
+                            <div style="font-size: 40px; margin-bottom: 12px;">3️⃣</div>
+                            <h4 style="margin-bottom: 8px;">Stock Reservado</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Produtos bloqueados para venda</p>
+                        </div>
+                        <div>
+                            <div style="font-size: 40px; margin-bottom: 12px;">4️⃣</div>
+                            <h4 style="margin-bottom: 8px;">Expedição</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Ordem enviada ao armazém</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>🛒 Carrinho</h3>
+            <button class="cart-close" onclick="toggleCart()">✕</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Generated by JS -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">€0.00</span>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="checkout()">
+                Finalizar Compra
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Sync Animation Overlay -->
+    <div class="sync-animation" id="syncAnimation">
+        <div class="sync-visual">
+            <div class="sync-box">
+                <span class="icon">🛍️</span>
+                <span>E-commerce</span>
+            </div>
+            <div class="sync-arrows">
+                <div class="sync-arrow"></div>
+                <div class="sync-arrow"></div>
+            </div>
+            <div class="sync-box">
+                <span class="icon">📦</span>
+                <span>Armazém</span>
+            </div>
+        </div>
+        <p class="sync-text">Sincronizando dados...</p>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal-overlay" id="addProductModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Adicionar Produto</h3>
+                <button class="cart-close" onclick="closeModal('addProductModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nome do Produto</label>
+                    <input type="text" class="form-input" id="productName" placeholder="Ex: iPhone 15 Pro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoria</label>
+                    <select class="form-input form-select" id="productCategory">
+                        <option value="smartphones">Smartphones</option>
+                        <option value="laptops">Laptops</option>
+                        <option value="tablets">Tablets</option>
+                        <option value="audio">Áudio</option>
+                        <option value="accessories">Acessórios</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Preço (€)</label>
+                    <input type="number" class="form-input" id="productPrice" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock Inicial</label>
+                    <input type="number" class="form-input" id="productStock" placeholder="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="addProduct()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Detalhes do Pedido</h3>
+                <button class="cart-close" onclick="closeModal('orderModal')">✕</button>
+            </div>
+            <div class="modal-body" id="orderModalBody">
+                <!-- Generated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('orderModal')">Fechar</button>
+                <button class="btn btn-primary" id="orderActionBtn">Processar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
